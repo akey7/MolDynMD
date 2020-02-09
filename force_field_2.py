@@ -20,7 +20,7 @@ class MolDynMDStretch:
             H) of the taom for that position.
 
         atom_positions : np.array
-            Array of floats that are the positions of the atoms in angstroms.
+            Array of floats that are the positions of the atoms in meters.
             Shape (N, 3) where N is the number of atoms.
 
         atom_bonds : np.array
@@ -62,26 +62,26 @@ class MolDynMDStretch:
                 if i !=j and bonds[i, j, 0] != 0:
                     type_i = types[i]
                     type_j = types[j]
-                    l_IJ = bonds[i, j, 0]
+                    l_IJ_0 = bonds[i, j, 0]
                     k_IJ = bonds[i, j, 1]
                     r_i = xyz[i]
                     r_j = xyz[j]
 
                     l2_norm = np.sqrt(np.sum(np.square(r_j - r_i)))
 
-                    v_str_ij = 1/2 * k_IJ *(l_IJ)
+                    v_str_ij = 1/2 * k_IJ * np.square(l2_norm - l_IJ_0)
 
-                    print(f"Found bond from {r_i} to {r_j} type_i={type_i} type_j={type_j} l_IJ={l_IJ} k_IJ={k_IJ} l2_norm={l2_norm}")
+                    print(f"Found bond from {r_i} to {r_j} type_i={type_i} type_j={type_j} l_IJ_0={l_IJ_0} k_IJ={k_IJ} l2_norm={l2_norm} v_str_ij={v_str_ij}")
 
         self.timestep_integer += 1
 
 
 if __name__ == '__main__':
     atom_types = [1, 1]
-    atom_xyz = np.array([[0, 0, 0], [0.74, 0, 0]])
+    atom_xyz = np.array([[0, 0, 0], [1, 0, 0]])
     atom_bonds = np.array([
-        [[0, 0], [1, 1]],
-        [[1, 1], [0, 0]]
+        [[0, 0], [0.74e-12, 1]],
+        [[0.74e-12, 1], [0, 0]]
     ])
     mol_dyn = MolDynMDStretch(atom_types=atom_types, atoms_xyz=atom_xyz, atom_bonds=atom_bonds)
     
