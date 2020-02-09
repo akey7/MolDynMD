@@ -66,7 +66,12 @@ class MolDynMDStretch:
                     k_IJ = bonds[i, j, 1]
                     r_i = xyz[i]
                     r_j = xyz[j]
-                    print(f"Found bond from {r_i} to {r_j} type_i={type_i} type_j={type_j} l_IJ={l_IJ} k_IJ={k_IJ}")
+
+                    l2_norm = np.sqrt(np.sum(np.square(r_j - r_i)))
+
+                    v_str_ij = 1/2 * k_IJ *(l_IJ)
+
+                    print(f"Found bond from {r_i} to {r_j} type_i={type_i} type_j={type_j} l_IJ={l_IJ} k_IJ={k_IJ} l2_norm={l2_norm}")
 
         self.timestep_integer += 1
 
