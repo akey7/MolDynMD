@@ -64,6 +64,7 @@ class MolDynTwoAtom:
         self.v2s = [v2_A_per_fs]
         self.r1s = [r1_A]
         self.r2s = [r2_A]
+        self.timesteps = [0]
 
     def timestep(self):
         """
@@ -93,10 +94,11 @@ class MolDynTwoAtom:
         self.r1s.append(self.r1_A)
         self.r2s.append(self.r2_A)
 
+        # Store the timestep
+        self.timesteps.append(self.time_fs)
+
         # Increment the time counter
         self.time_fs += self.dt_fs
-
-        print(f"time_fs={self.time_fs} grad_12={grad_12} grad_21={grad_21} r1={self.r1_A} r2={self.r2_A} v1={self.v1_A_per_fs} v2={self.v2_A_per_fs}")
 
     def compute_gradients(self):
         """
