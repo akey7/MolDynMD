@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.linalg import norm
 
 
 # There is a blank string at the begining so the 1 position is H
@@ -11,8 +12,10 @@ class MolDynMDStretch:
     """
     
 
-    def __init__(self, *, atom_types, atom_positions, atom_velocities, atom_bonds):
+    def __init__(self, *, atom_types, atom_positions, atom_velocities, atom_bonds, dt_s, grad_h_m):
         """
+        To make your life easier, please use mks units. Thanks!
+
         Parameters
         ----------
         atom_types : list
@@ -34,11 +37,20 @@ class MolDynMDStretch:
             constants (k_IJ). Shape (N, N, 3). (i, i, 0) is l_IJ_0, 
             (i, i, 1) is k_IJ. See the v_stretch_ij method below for
             more on these parameters and where to read more.
+
+        dt_s : float
+            Time step, in seconds, for the numeric integration step.
+
+        grad_h_m : float
+            For finite difference approximation, this is the delta used
+            to compute the finite differences. In meters.
         """
         self.atom_positions = atom_positions
         self.atom_types = atom_types
         self.atom_bonds = atom_bonds
         self.atom_velocities = atom_velocities
+        self.dt_s = dt_s
+        self.grad_h_m = grad_h_m
         self.timestep_integer = 0
 
     def __str__(self):
@@ -81,26 +93,29 @@ class MolDynMDStretch:
                     r_i = xyz[i]
                     r_j = xyz[j]
 
-                    v_str_ij = self.v_stretch_ij(r_i=r_i, r_j=r_j, k_IJ=k_IJ, l_IJ_0=l_IJ_0)
+                    l_ij = norm(r_j - r_i)
+                    v_str_ij, grad_str_ij = self.v_stretch_ij(l_ij=l_ij, k_IJ=k_IJ, l_IJ_0=l_IJ_0)
 
-                    print(f"Found bond from {r_i} to {r_j} type_i={type_i} type_j={type_j} l_IJ_0={l_IJ_0} k_IJ={k_IJ} v_str_ij={v_str_ij}")
+                    print(f"Found bond from {r_i} to {r_j} l_IJ_0={l_IJ_0} k_IJ={k_IJ} l_ij={l_ij} v_str_ij={v_str_ij}, grad_str_ij={grad_str_ij}")
 
         self.timestep_integer += 1
 
-    def v_stretch_ij(self, *, r_i, r_j, k_IJ, l_IJ_0):
+    def v_stretch_ij(self, *, l_ij, k_IJ, l_IJ_0):
         """
-        Calculates the stretch energy of two bonded atoms.
+        Calculates the stretch energy of two bonded atoms. Also calculates
+        the gradient of that energy with a finite difference approximation.
 
         For more information on the parameters, please see:
-        Quantum Chemistry, 7th ed, Ira N. Levine. pp. 636-637
+        Quantum Chemistry, 7th ed, Ira N. Levine. pp. 636-637.
+
+        For finite differences, see the derivation from the Taylor expansion at
+        https://en.wikipedia.org/wiki/Finite_difference_method#Derivation_from_Taylor's_polynomial
+        https://en.wikipedia.org/wiki/Difference_quotient#Overview
 
         Parameters
         ----------
-        r_i : np.array
-            3 dimension row vector location of the location of the first atom.
-
-        r_j : np.array
-            3 dimension row vector location of the location of the second atom.
+        l_ij : float
+            The distance between the two atoms in question.
 
         k_IJ : float
             The force constant of the stretch.
@@ -110,12 +125,16 @@ class MolDynMDStretch:
 
         Returns
         -------
-        float
-            v_str_ij: The stretch energy between atoms i and j.
+        float, float
+            First element v_str_ij: The stretch energy between atoms i and j.
+            Second element: Gradient of the stretch energy.
         """
-        l2_norm = np.sqrt(np.sum(np.square(r_j - r_i)))
-        v_str_ij = 1 / 2 * k_IJ * np.square(l2_norm - l_IJ_0)
-        return v_str_ij
+        def v_str_ij(x): return 1 / 2 * k_IJ * np.square(x - l_IJ_0)
+
+        h = self.grad_h_m
+        grad_str_ij = (v_str_ij(l_ij + h) - v_str_ij(l_ij)) / h
+
+        return v_str_ij(l_ij), grad_str_ij
 
 
 if __name__ == '__main__':
@@ -130,7 +149,9 @@ if __name__ == '__main__':
     mol_dyn = MolDynMDStretch(atom_types=atom_types,
                               atom_velocities=atom_velocities,
                               atom_positions=atom_xyz,
-                              atom_bonds=atom_bonds)
+                              atom_bonds=atom_bonds,
+                              dt_s=0.1e-15,
+                              grad_h_m=1e-15)
     
     mol_dyn.timestep()
 
