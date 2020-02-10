@@ -16,6 +16,17 @@ class MolDynMDStretch:
         """
         To make your life easier, please use mks units. Thanks!
 
+        In addition to the parameters passed in, this makes two more
+        instance attributes:
+
+        timestep_integers: An integer counter of each timestep.
+
+        timestep_fs: A floating point counter of the time at
+        each time step.
+
+        trajectory: A list of dictionaries that contains copies of all
+        the number arrays at each point in the process.
+
         Parameters
         ----------
         atom_types : list
@@ -57,6 +68,15 @@ class MolDynMDStretch:
         self.dt_s = dt_s
         self.grad_h_m = grad_h_m
         self.timestep_integer = 0
+        self.timestep_s = 0
+        self.trajectory = []
+
+        self.trajectory.append({
+            "timestep_s": self.timestep_s,
+            "timestep_integer": self.timestep_integer,
+            "atom_positions": np.copy(atom_positions),
+            "atom_velocities": np.copy(atom_velocities)
+        })
 
     def __str__(self):
         """
@@ -88,19 +108,22 @@ class MolDynMDStretch:
         5. Update velocities and positions
         """
         bonds = self.atom_bonds
-        xyz = self.atom_positions
+        positions = self.atom_positions
+        velocities = self.atom_velocities
         masses = self.atom_masses
-        n_atoms = xyz.shape[0]
+        n_atoms = positions.shape[0]
+        dt_s = self.dt_s
 
         accelerations = np.zeros(n_atoms * 3).reshape(-1, 3)
 
-        for i in range(xyz.shape[0]):
-            for j in range(xyz.shape[0]):
+        # Calculate all accelerations
+        for i in range(positions.shape[0]):
+            for j in range(positions.shape[0]):
                 if i !=j and bonds[i, j, 0] != 0:
                     l_IJ_0 = bonds[i, j, 0]
                     k_IJ = bonds[i, j, 1]
-                    r_i = xyz[i]
-                    r_j = xyz[j]
+                    r_i = positions[i]
+                    r_j = positions[j]
                     mass_i = masses[i]
 
                     # Compute the stretch energy and its gradient
@@ -117,9 +140,24 @@ class MolDynMDStretch:
                     a_i = f_ij / mass_i
                     accelerations[i] = a_i
 
-                    print(f"Bond from {r_i} to {r_j} l_IJ_0={l_IJ_0} k_IJ={k_IJ} l_ij={l_ij} v_str_ij={v_str_ij} grad_str_ij={grad_str_ij} unit_ij={unit_ij} f_ij={f_ij} a_i={a_i}")
+                    # print(f"Bond from {r_i} to {r_j} l_IJ_0={l_IJ_0} k_IJ={k_IJ} l_ij={l_ij} v_str_ij={v_str_ij} grad_str_ij={grad_str_ij} unit_ij={unit_ij} f_ij={f_ij} a_i={a_i}")
 
+        # Update the velocities and positions
+        for i in range(n_atoms):
+            velocities[i] += accelerations[i] * dt_s
+            positions[i] += velocities[i] * dt_s
+
+        # Update the timesteps
+        self.timestep_s += self.dt_s
         self.timestep_integer += 1
+
+        # Store the trajectory
+        self.trajectory.append({
+            "timestep_s": self.timestep_s,
+            "timestep_integer": self.timestep_integer,
+            "atom_positions": np.copy(positions),
+            "atom_velocities": np.copy(velocities)
+        })
 
     def v_stretch_ij(self, *, l_ij, k_IJ, l_IJ_0):
         """
@@ -177,6 +215,7 @@ if __name__ == '__main__':
                               grad_h_m=1e-15)
     
     mol_dyn.timestep()
+    print(mol_dyn.trajectory)
 
     fn = f"xyz/trajectory_{mol_dyn.timestep_integer}.xyz"
     with open(fn, "a") as f:
