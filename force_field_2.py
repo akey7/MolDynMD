@@ -198,11 +198,11 @@ class MolDynMDStretch:
 
 if __name__ == '__main__':
     atom_types = [1, 1]
-    atom_xyz = np.array([[0, 0, 0], [1e-12, 0, 0]])
+    atom_xyz = np.array([[-37e-12, 0, 0], [37e-12, 0, 0]])
     atom_velocities = np.array([[0.01e-12, 0, 0], [-0.01e-12, 0, 0]])
     atom_bonds = np.array([
-        [[0, 0], [0.74e-12, 1]],
-        [[0.74e-12, 1], [0, 0]]
+        [[0, 0], [0.74e-12, -100]],
+        [[0.74e-12, -100], [0, 0]]
     ])
     atom_masses = np.array([1.634e-27, 1.634e-27])  # The masses of H atoms in kg
 
@@ -215,7 +215,6 @@ if __name__ == '__main__':
                               grad_h_m=1e-15)
     
     mol_dyn.timestep()
-    print(mol_dyn.trajectory)
 
     fn = f"xyz/trajectory_{mol_dyn.timestep_integer}.xyz"
     with open(fn, "a") as f:
