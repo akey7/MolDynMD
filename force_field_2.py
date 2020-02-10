@@ -89,7 +89,10 @@ class MolDynMDStretch:
         """
         bonds = self.atom_bonds
         xyz = self.atom_positions
-        types = self.atom_types
+        masses = self.atom_masses
+        n_atoms = xyz.shape[0]
+
+        accelerations = np.zeros(n_atoms * 3).reshape(-1, 3)
 
         for i in range(xyz.shape[0]):
             for j in range(xyz.shape[0]):
@@ -98,6 +101,7 @@ class MolDynMDStretch:
                     k_IJ = bonds[i, j, 1]
                     r_i = xyz[i]
                     r_j = xyz[j]
+                    mass_i = masses[i]
 
                     # Compute the stretch energy and its gradient
                     l_ij = norm(r_j - r_i)
@@ -109,7 +113,11 @@ class MolDynMDStretch:
                     # Compute force SEE NOTE ABOUT DIATOMIC ASSUMPTION ABOVE
                     f_ij = -grad_str_ij * unit_ij
 
-                    print(f"Bond from {r_i} to {r_j} l_IJ_0={l_IJ_0} k_IJ={k_IJ} l_ij={l_ij} v_str_ij={v_str_ij} grad_str_ij={grad_str_ij} unit_ij={unit_ij} f_ij={f_ij}")
+                    # compute the acceleration
+                    a_i = f_ij / mass_i
+                    accelerations[i] = a_i
+
+                    print(f"Bond from {r_i} to {r_j} l_IJ_0={l_IJ_0} k_IJ={k_IJ} l_ij={l_ij} v_str_ij={v_str_ij} grad_str_ij={grad_str_ij} unit_ij={unit_ij} f_ij={f_ij} a_i={a_i}")
 
         self.timestep_integer += 1
 
