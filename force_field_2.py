@@ -12,7 +12,7 @@ class MolDynMDStretch:
     """
     
 
-    def __init__(self, *, atom_types, atom_positions, atom_velocities, atom_bonds, dt_s, grad_h_m):
+    def __init__(self, *, atom_types, atom_masses, atom_positions, atom_velocities, atom_bonds, dt_s, grad_h_m):
         """
         To make your life easier, please use mks units. Thanks!
 
@@ -20,7 +20,11 @@ class MolDynMDStretch:
         ----------
         atom_types : list
             List of strings, each of which is the atomic number (such as 1 for 
-            H) of the taom for that position.
+            H) of the atom for that position.
+
+        atom_masses : np.array
+            Array of floats that are the masses of each atom in kg.
+            Shape (N) where N is the number of atoms.
 
         atom_positions : np.array
             Array of floats that are the positions of the atoms in meters.
@@ -49,6 +53,7 @@ class MolDynMDStretch:
         self.atom_types = atom_types
         self.atom_bonds = atom_bonds
         self.atom_velocities = atom_velocities
+        self.atom_masses = atom_masses
         self.dt_s = dt_s
         self.grad_h_m = grad_h_m
         self.timestep_integer = 0
@@ -86,17 +91,19 @@ class MolDynMDStretch:
         for i in range(xyz.shape[0]):
             for j in range(xyz.shape[0]):
                 if i !=j and bonds[i, j, 0] != 0:
-                    type_i = types[i]
-                    type_j = types[j]
                     l_IJ_0 = bonds[i, j, 0]
                     k_IJ = bonds[i, j, 1]
                     r_i = xyz[i]
                     r_j = xyz[j]
 
+                    # Compute the stretch energy and its gradient
                     l_ij = norm(r_j - r_i)
                     v_str_ij, grad_str_ij = self.v_stretch_ij(l_ij=l_ij, k_IJ=k_IJ, l_IJ_0=l_IJ_0)
 
-                    print(f"Found bond from {r_i} to {r_j} l_IJ_0={l_IJ_0} k_IJ={k_IJ} l_ij={l_ij} v_str_ij={v_str_ij}, grad_str_ij={grad_str_ij}")
+                    # Compute the unit vector from i to j
+                    unit_ij = (r_j - r_i) / l_ij
+
+                    print(f"Found bond from {r_i} to {r_j} l_IJ_0={l_IJ_0} k_IJ={k_IJ} l_ij={l_ij} v_str_ij={v_str_ij}, grad_str_ij={grad_str_ij}, unit_ij={unit_ij}")
 
         self.timestep_integer += 1
 
@@ -145,8 +152,10 @@ if __name__ == '__main__':
         [[0, 0], [0.74e-12, 1]],
         [[0.74e-12, 1], [0, 0]]
     ])
+    atom_masses = np.array([1.634e-27, 1.634e-27])  # The masses of H atoms in kg
 
     mol_dyn = MolDynMDStretch(atom_types=atom_types,
+                              atom_masses=atom_masses,
                               atom_velocities=atom_velocities,
                               atom_positions=atom_xyz,
                               atom_bonds=atom_bonds,
