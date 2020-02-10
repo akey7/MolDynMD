@@ -76,6 +76,9 @@ class MolDynMDStretch:
 
     def timestep(self):
         """
+        WARNING: THIS IS A FIRST PASS AT THIS MODEL. IT ASSUMES A DIATOMIC
+        MOLECULE. SO I AM SKIPPING THE FORCE SUMMATION STEP FOR NOW.
+
         Steps one timestep of the model:
 
         1. Energies
@@ -103,7 +106,10 @@ class MolDynMDStretch:
                     # Compute the unit vector from i to j
                     unit_ij = (r_j - r_i) / l_ij
 
-                    print(f"Found bond from {r_i} to {r_j} l_IJ_0={l_IJ_0} k_IJ={k_IJ} l_ij={l_ij} v_str_ij={v_str_ij}, grad_str_ij={grad_str_ij}, unit_ij={unit_ij}")
+                    # Compute force SEE NOTE ABOUT DIATOMIC ASSUMPTION ABOVE
+                    f_ij = -grad_str_ij * unit_ij
+
+                    print(f"Bond from {r_i} to {r_j} l_IJ_0={l_IJ_0} k_IJ={k_IJ} l_ij={l_ij} v_str_ij={v_str_ij} grad_str_ij={grad_str_ij} unit_ij={unit_ij} f_ij={f_ij}")
 
         self.timestep_integer += 1
 
