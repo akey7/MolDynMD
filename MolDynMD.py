@@ -5,13 +5,7 @@ from numpy.linalg import norm
 # There is a blank string at the begining so the 1 position is H
 element_symbols = ["", "H"]
 
-class MolDynMDStretch:
-    """
-    This just computes the stretch energy of two atoms.
-    The atoms are in 3 dimensional cartesian space.
-    """
-    
-
+class MolDynMD:
     def __init__(self, *, atom_types, atom_masses, atom_positions, atom_velocities, atom_bonds, dt_s, grad_h_m):
         """
         To make your life easier, please use mks units. Thanks!
@@ -139,8 +133,6 @@ class MolDynMDStretch:
                     # compute the acceleration
                     a_i = f_ij / mass_i
                     accelerations[i] = a_i
-
-                    # print(f"Bond from {r_i} to {r_j} l_IJ_0={l_IJ_0} k_IJ={k_IJ} l_ij={l_ij} v_str_ij={v_str_ij} grad_str_ij={grad_str_ij} unit_ij={unit_ij} f_ij={f_ij} a_i={a_i}")
 
         # Update the velocities and positions
         for i in range(n_atoms):
