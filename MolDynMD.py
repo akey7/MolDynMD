@@ -3,7 +3,7 @@ from numpy.linalg import norm
 
 
 # There is a blank string at the begining so the 1 position is H
-element_symbols = ["", "H"]
+element_symbols = ["", "H", "He", "Li", "Be", "B", "C", "N", "O", "F", "Ne"]
 
 class MolDynMD:
     def __init__(self, *, atom_types, atom_masses, atom_positions, atom_velocities, atom_bonds, dt_s, grad_h_m):
