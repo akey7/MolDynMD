@@ -90,9 +90,6 @@ class MolDynMD:
 
     def timestep(self):
         """
-        WARNING: THIS IS A FIRST PASS AT THIS MODEL. IT ASSUMES A DIATOMIC
-        MOLECULE. SO I AM SKIPPING THE FORCE SUMMATION STEP FOR NOW.
-
         Steps one timestep of the model:
 
         1. Energies
@@ -112,13 +109,16 @@ class MolDynMD:
 
         # Calculate all accelerations
         for i in range(positions.shape[0]):
+            mass_i = masses[i]
+            f_sum_i = np.array([0., 0., 0.])
+
             for j in range(positions.shape[0]):
+                r_i = positions[i]
+                r_j = positions[j]
+                
                 if i !=j and bonds[i, j, 0] != 0:
                     l_IJ_0 = bonds[i, j, 0]
                     k_IJ = bonds[i, j, 1]
-                    r_i = positions[i]
-                    r_j = positions[j]
-                    mass_i = masses[i]
 
                     # Compute the stretch energy and its gradient
                     l_ij = norm(r_j - r_i)
@@ -127,17 +127,18 @@ class MolDynMD:
                     # Compute the unit vector from i to j
                     unit_ij = (r_j - r_i) / l_ij
 
-                    # Compute force SEE NOTE ABOUT DIATOMIC ASSUMPTION ABOVE
+                    # Accumulate the force into the sum above
                     f_ij = -grad_str_ij * unit_ij
+                    f_sum_i += f_ij
 
-                    # compute the acceleration
-                    a_i = f_ij / mass_i
-                    accelerations[i] = a_i
+            # compute the acceleration on i
+            a_i = f_sum_i / mass_i
+            accelerations[i] = a_i
 
         # Update the velocities and positions
         for i in range(n_atoms):
             velocities[i] += accelerations[i] * dt_s
-            positions[i] += velocities[i] * dt_s
+            positions[i] += velocities[i] * dt_s # Make sure to get previous, unmodified timestep
 
         # Update the timesteps
         self.timestep_s += self.dt_s
@@ -148,7 +149,8 @@ class MolDynMD:
             "timestep_s": self.timestep_s,
             "timestep_integer": self.timestep_integer,
             "atom_positions": np.copy(positions),
-            "atom_velocities": np.copy(velocities)
+            "atom_velocities": np.copy(velocities),
+            "atom_accelerations": np.copy(accelerations)
         })
 
     def v_stretch_ij(self, *, l_ij, k_IJ, l_IJ_0):
