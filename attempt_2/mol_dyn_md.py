@@ -52,6 +52,11 @@ class MolDynMD:
         initial_velocity: np.array
             The initial velocity of the atom as a 3 element numpy array
 
+        Returns
+        -------
+        int
+            The index of the atom just created.
+
         Raises
         ------
         ValueError
@@ -68,6 +73,8 @@ class MolDynMD:
         if initial_velocity.shape[0] != 3:
             raise ValueError(f"Initial velocity of {initial_velocity} is not a 3 element array.")
 
+        index_for_new_atom = len(self.symbols)
+
         self.symbols.append(symbol)
 
         if self.positions is None:
@@ -80,4 +87,4 @@ class MolDynMD:
         else:
             self.velocities = np.append(self.velocities, initial_velocity).reshape(-1, 3)
 
-        return
+        return index_for_new_atom

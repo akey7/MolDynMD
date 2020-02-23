@@ -20,7 +20,12 @@ def h2_no_velocity_fixture():
 def test_h2_positions(h2_no_velocity_fixture):
     expected_positions = np.array([[-32e-12, 0, 0], [32e-12, 0, 0]])
     actual_positions = h2_no_velocity_fixture.positions
-    print(actual_positions)
-    assert True
+    assert np.all(expected_positions == actual_positions)
+
+
+def test_h2_velocities(h2_no_velocity_fixture):
+    expected_positions = np.array([[0, 0, 0], [0, 0, 0]])
+    actual_positions = h2_no_velocity_fixture.velocities
+    assert np.all(expected_positions == actual_positions)
 
 
