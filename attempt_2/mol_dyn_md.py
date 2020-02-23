@@ -1,3 +1,14 @@
+"""
+Notation in the file uses the style from Quantum Chemistry, 7th Ed by
+Ira Levine, pp. 636-637. Note that there are some good unit conversions
+in here.
+
+However, in Introduction to Computational Chemistry by Jensen, pg. 64
+has some interesting values for force fields also. Its explanation
+of the stretch energy on pg. 25 Eqn. 2.3 is enlightening.
+"""
+
+
 import networkx as nx
 import numpy as np
 
@@ -95,6 +106,17 @@ class MolDynMD:
         self.graph.add_node(index_for_new_atom)
 
         return index_for_new_atom
+
+    def add_bond(self, atom1, atom2, l_IJ, k_IJ):
+        """
+        This adds a bond as an edge on the graph.
+
+        Parameters
+        ----------
+        atom1 : int
+            The index of the first atom to draw the bond to
+        """
+        pass
 
     @property
     def symbols_positions_velocities(self):

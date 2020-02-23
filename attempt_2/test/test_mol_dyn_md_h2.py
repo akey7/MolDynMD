@@ -12,8 +12,8 @@ def h2_md_initial_state():
     h2_initial_position = np.array([32e-12, 0, 0])
     h1_initial_velocity = np.array([0, 0, 0])
     h2_initial_velocity = np.array([0, 0, 0])
-    md.add_atom("H", initial_position=h1_initial_position, initial_velocity=h1_initial_velocity)
-    md.add_atom("H", initial_position=h2_initial_position, initial_velocity=h2_initial_velocity)
+    h1 = md.add_atom("H", initial_position=h1_initial_position, initial_velocity=h1_initial_velocity)
+    h2 = md.add_atom("H", initial_position=h2_initial_position, initial_velocity=h2_initial_velocity)
     return md
 
 
