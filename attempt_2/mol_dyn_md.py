@@ -94,7 +94,13 @@ class MolDynMD:
         if initial_velocity.shape[0] != 3:
             raise ValueError(f"Initial velocity of {initial_velocity} is not a 3 element array.")
 
-        self.graph.add_node(self.atom_counter, symbol=symbol, positions=initial_position, velocity=initial_velocity)
+        mass_kg = atom_masses[symbol]
+
+        self.graph.add_node(self.atom_counter,
+                            symbol=symbol,
+                            positions=initial_position,
+                            velocity=initial_velocity,
+                            mass_kg=mass_kg)
 
         self.atom_counter += 1
 

@@ -37,3 +37,8 @@ def test_HCl_atom_types(hcl):
 def test_HCl_reference_length(hcl):
     bond = hcl.graph.edges[0, 1]
     assert bond["l_IJ_0"] == reference_length_of_HCl_m
+
+
+def test_HCl_force_constant(hcl):
+    bond = hcl.graph.edges[0, 1]
+    assert bond["k_IJ"] == force_constant
