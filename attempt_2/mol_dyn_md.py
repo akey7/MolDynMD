@@ -155,12 +155,13 @@ class MolDynMD:
 
         Returns
         -------
-        pd.DataFrame
+        list[dict]
             The symbols and locations of the atoms.
         """
         rows = []
 
-        for atom in self.graph.nodes:
+        for i in range(len(self.graph.nodes)):
+            atom = self.graph.nodes[i]
             row = {
                 "symbol": atom["symbol"],
                 "x": atom["position"][0],
@@ -169,4 +170,24 @@ class MolDynMD:
             }
             rows.append(row)
 
-        return pd.DataFrame(rows)
+        return rows
+
+
+if __name__ == "__main__":
+    reference_length_of_HCl_m = 127.45e-12
+    force_constant = -1.0
+
+    md = MolDynMD()
+    h_initial_position = np.array([reference_length_of_HCl_m, 0, 0])
+    cl_initial_position = np.array([0., 0., 0.])
+    h_initial_velocity = np.array([0., 0., 0.])
+    cl_initial_velocity = np.array([0., 0., 0.])
+    h1 = md.add_atom("H", initial_position=h_initial_position, initial_velocity=h_initial_velocity)
+    cl = md.add_atom("Cl", initial_position=cl_initial_position, initial_velocity=cl_initial_velocity)
+    md.add_bond(h1, cl, l_IJ_0=reference_length_of_HCl_m, k_IJ=force_constant)
+    rows = md.xyz_atom_list()
+
+    print(f"{len(rows)}\n")
+
+    for row in rows:
+        print(f"{row['symbol']}\t{row['x']}\t{row['y']}\t{row['z']}")
