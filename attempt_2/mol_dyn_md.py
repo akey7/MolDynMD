@@ -11,6 +11,7 @@ of the stretch energy on pg. 25 Eqn. 2.3 is enlightening.
 
 import networkx as nx
 import numpy as np
+import pandas as pd
 
 from collections import namedtuple
 
@@ -98,7 +99,7 @@ class MolDynMD:
 
         self.graph.add_node(self.atom_counter,
                             symbol=symbol,
-                            positions=initial_position,
+                            position=initial_position,
                             velocity=initial_velocity,
                             mass_kg=mass_kg)
 
@@ -146,3 +147,26 @@ class MolDynMD:
             raise ValueError(f"k_IJ of {k_IJ} should be negative")
 
         self.graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ)
+
+    def xyz_atom_list(self):
+        """
+        This returns a list, in a pandas dataframe, of all the atom
+        symbols and their positions.
+
+        Returns
+        -------
+        pd.DataFrame
+            The symbols and locations of the atoms.
+        """
+        rows = []
+
+        for atom in self.graph.nodes:
+            row = {
+                "symbol": atom["symbol"],
+                "x": atom["position"][0],
+                "y": atom["position"][1],
+                "z": atom["position"][2]
+            }
+            rows.append(row)
+
+        return pd.DataFrame(rows)
