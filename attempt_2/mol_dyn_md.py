@@ -24,11 +24,6 @@ atom_masses = {
 SymbolPositionVelocity = namedtuple("SymbolPositionVelocity", ("symbol", "position", "velocity"))
 
 
-# See docstring for add_bond below and the citations above for more explnation
-# of these parameters
-Bond = namedtuple("Bond", ("l_IJ_0", "k_IJ"))
-
-
 class MolDynMD:
     """
     This is a molecular dynamics class. It only supports stretch energy
@@ -162,6 +157,4 @@ class MolDynMD:
         if k_IJ >= 0:
             raise ValueError(f"k_IJ of {k_IJ} should be negative")
 
-        bond = Bond(l_IJ_0=l_IJ_0, k_IJ=k_IJ)
-
-        self.graph.add_edge(atom1, atom2, bond=bond)
+        self.graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ)

@@ -80,5 +80,5 @@ def test_edge_parameters(h2_md_initial_state):
     This tests to make sure the edge contains the parameters that it should.
     """
 
-    bond = h2_md_initial_state.graph.get_edge_data(0, 1)["bond"]
-    assert bond.l_IJ_0 == bond_length_of_H2_m and bond.k_IJ == force_constant
+    bond = h2_md_initial_state.graph.get_edge_data(0, 1)
+    assert bond["l_IJ_0"] == bond_length_of_H2_m and bond["k_IJ"] == force_constant
