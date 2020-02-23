@@ -21,9 +21,6 @@ atom_masses = {
 }
 
 
-SymbolPositionVelocity = namedtuple("SymbolPositionVelocity", ("symbol", "position", "velocity"))
-
-
 class MolDynMD:
     """
     This is a molecular dynamics class. It only supports stretch energy
@@ -56,9 +53,7 @@ class MolDynMD:
         list and positions and velocities arrays.
         """
         self.graph = nx.Graph()
-        self.symbols = []
-        self.positions = None
-        self.velocities = None
+        self.atom_counter = 0
 
     def add_atom(self, symbol, initial_position, initial_velocity):
         """
@@ -95,28 +90,11 @@ class MolDynMD:
         if initial_velocity.shape[0] != 3:
             raise ValueError(f"Initial velocity of {initial_velocity} is not a 3 element array.")
 
-        index_for_new_atom = len(self.symbols)
+        self.graph.add_node(self.atom_counter, symbol=symbol, positions=initial_position, velocity=initial_velocity)
 
-        self.symbols.append(symbol)
+        self.atom_counter += 1
 
-        if self.positions is None:
-            self.positions = initial_position.reshape(1, -1)
-        else:
-            self.positions = np.append(self.positions, initial_position).reshape(-1, 3)
-
-        if self.velocities is None:
-            self.velocities = initial_velocity.reshape(1, -1)
-        else:
-            self.velocities = np.append(self.velocities, initial_velocity).reshape(-1, 3)
-
-        self.graph.add_node(index_for_new_atom)
-
-        return index_for_new_atom
-
-    @property
-    def symbols_positions_velocities(self):
-        result = [SymbolPositionVelocity(s, p, v) for s, p, v in zip(self.symbols, self.positions, self.velocities)]
-        return result
+        return self.atom_counter - 1
 
     def add_bond(self, atom1, atom2, l_IJ_0, k_IJ):
         """
@@ -145,10 +123,10 @@ class MolDynMD:
             Raised if the force constant >= 0, or if the reference length is
             negative. Also raised if atom1 or atom2 point to non existent atoms
         """
-        if atom1 > len(self.symbols) - 1:
+        if atom1 > self.atom_counter - 1:
             raise ValueError(f"atom1 {atom1} is out of range")
 
-        if atom2 > len(self.symbols) - 1:
+        if atom2 > self.atom_counter - 1:
             raise ValueError(f"atom2 {atom2} is out of range")
 
         if l_IJ_0 <= 0:
