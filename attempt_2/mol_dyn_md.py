@@ -87,4 +87,6 @@ class MolDynMD:
         else:
             self.velocities = np.append(self.velocities, initial_velocity).reshape(-1, 3)
 
+        self.graph.add_node(index_for_new_atom)
+
         return index_for_new_atom
