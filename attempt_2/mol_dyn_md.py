@@ -150,8 +150,10 @@ class MolDynMD:
 
     def xyz_atom_list(self):
         """
-        This returns a list, in a pandas dataframe, of all the atom
-        symbols and their positions.
+        This returns a list of dictionaries appropriate to writing as a .xyz file.
+
+        This method assumes that picometers have been used for distances. However, it
+        can be useful to convert these to angstroms.
 
         Returns
         -------
@@ -164,9 +166,9 @@ class MolDynMD:
             atom = self.graph.nodes[i]
             row = {
                 "symbol": atom["symbol"],
-                "x": atom["position"][0],
-                "y": atom["position"][1],
-                "z": atom["position"][2]
+                "x": atom["position"][0] * 1e10,
+                "y": atom["position"][1] * 1e10,
+                "z": atom["position"][2] * 1e10
             }
             rows.append(row)
 
