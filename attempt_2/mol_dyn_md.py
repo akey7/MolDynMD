@@ -1,11 +1,16 @@
 import networkx as nx
 import numpy as np
 
+from collections import namedtuple
+
 # Defined outside the class so that it could be used by other code.
 # However, do not modify it!
 atom_masses = {
     "H": 1.00784 * 1.66054e-27
 }
+
+
+SymbolPositionVelocity = namedtuple("SymbolPositionVelocity", ("symbol", "position", "velocity"))
 
 
 class MolDynMD:
@@ -90,3 +95,8 @@ class MolDynMD:
         self.graph.add_node(index_for_new_atom)
 
         return index_for_new_atom
+
+    @property
+    def symbols_positions_velocities(self):
+        result = [SymbolPositionVelocity(s, p, v) for s, p, v in zip(self.symbols, self.positions, self.velocities)]
+        return result
