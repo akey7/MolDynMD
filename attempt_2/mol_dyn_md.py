@@ -11,17 +11,19 @@ of the stretch energy on pg. 25 Eqn. 2.3 is enlightening.
 
 import networkx as nx
 import numpy as np
+import pandas as pd
 
 from collections import namedtuple
 
 # Defined outside the class so that it could be used by other code.
 # However, do not modify it!
+
+kg_per_amu = 1.66054e-27
+
 atom_masses = {
-    "H": 1.00784 * 1.66054e-27
+    "H": 1.00784 * kg_per_amu,
+    "Cl": 35.453 * kg_per_amu
 }
-
-
-SymbolPositionVelocity = namedtuple("SymbolPositionVelocity", ("symbol", "position", "velocity"))
 
 
 class MolDynMD:
@@ -56,9 +58,7 @@ class MolDynMD:
         list and positions and velocities arrays.
         """
         self.graph = nx.Graph()
-        self.symbols = []
-        self.positions = None
-        self.velocities = None
+        self.atom_counter = 0
 
     def add_atom(self, symbol, initial_position, initial_velocity):
         """
@@ -95,28 +95,17 @@ class MolDynMD:
         if initial_velocity.shape[0] != 3:
             raise ValueError(f"Initial velocity of {initial_velocity} is not a 3 element array.")
 
-        index_for_new_atom = len(self.symbols)
+        mass_kg = atom_masses[symbol]
 
-        self.symbols.append(symbol)
+        self.graph.add_node(self.atom_counter,
+                            symbol=symbol,
+                            position=initial_position,
+                            velocity=initial_velocity,
+                            mass_kg=mass_kg)
 
-        if self.positions is None:
-            self.positions = initial_position.reshape(1, -1)
-        else:
-            self.positions = np.append(self.positions, initial_position).reshape(-1, 3)
+        self.atom_counter += 1
 
-        if self.velocities is None:
-            self.velocities = initial_velocity.reshape(1, -1)
-        else:
-            self.velocities = np.append(self.velocities, initial_velocity).reshape(-1, 3)
-
-        self.graph.add_node(index_for_new_atom)
-
-        return index_for_new_atom
-
-    @property
-    def symbols_positions_velocities(self):
-        result = [SymbolPositionVelocity(s, p, v) for s, p, v in zip(self.symbols, self.positions, self.velocities)]
-        return result
+        return self.atom_counter - 1
 
     def add_bond(self, atom1, atom2, l_IJ_0, k_IJ):
         """
@@ -145,10 +134,10 @@ class MolDynMD:
             Raised if the force constant >= 0, or if the reference length is
             negative. Also raised if atom1 or atom2 point to non existent atoms
         """
-        if atom1 > len(self.symbols) - 1:
+        if atom1 > self.atom_counter - 1:
             raise ValueError(f"atom1 {atom1} is out of range")
 
-        if atom2 > len(self.symbols) - 1:
+        if atom2 > self.atom_counter - 1:
             raise ValueError(f"atom2 {atom2} is out of range")
 
         if l_IJ_0 <= 0:
@@ -158,3 +147,26 @@ class MolDynMD:
             raise ValueError(f"k_IJ of {k_IJ} should be negative")
 
         self.graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ)
+
+    def xyz_atom_list(self):
+        """
+        This returns a list, in a pandas dataframe, of all the atom
+        symbols and their positions.
+
+        Returns
+        -------
+        pd.DataFrame
+            The symbols and locations of the atoms.
+        """
+        rows = []
+
+        for atom in self.graph.nodes:
+            row = {
+                "symbol": atom["symbol"],
+                "x": atom["position"][0],
+                "y": atom["position"][1],
+                "z": atom["position"][2]
+            }
+            rows.append(row)
+
+        return pd.DataFrame(rows)
