@@ -9,6 +9,8 @@ of the stretch energy on pg. 25 Eqn. 2.3 is enlightening.
 """
 
 
+import os
+
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -148,6 +150,15 @@ class MolDynMD:
 
         self.graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ)
 
+    def timestep(self):
+        """
+        This steps the simulations by the timestep that has been previously
+        specified.
+
+        Right now it does nothing.
+        """
+        pass
+
     def xyz_atom_list(self):
         """
         This returns a list of dictionaries appropriate to writing as a .xyz file.
@@ -180,10 +191,11 @@ def main():
     Though not strictly necessary, this avoids variables being planed in th
     outer scope of the module thereby creating shadowing problems.
     """
+    md = MolDynMD()
+
+    # Setup the initial and bond conditions
     reference_length_of_HCl_m = 127.45e-12
     force_constant = -1.0
-
-    md = MolDynMD()
     h_initial_position = np.array([reference_length_of_HCl_m, 0, 0])
     cl_initial_position = np.array([0., 0., 0.])
     h_initial_velocity = np.array([0., 0., 0.])
@@ -191,12 +203,21 @@ def main():
     h1 = md.add_atom("H", initial_position=h_initial_position, initial_velocity=h_initial_velocity)
     cl = md.add_atom("Cl", initial_position=cl_initial_position, initial_velocity=cl_initial_velocity)
     md.add_bond(h1, cl, l_IJ_0=reference_length_of_HCl_m, k_IJ=force_constant)
-    rows = md.xyz_atom_list()
 
-    print(f"{len(rows)}\n")
+    # Now time step it for a certain number of times
+    number_of_timesteps = 100
+    for i in range(number_of_timesteps):
+        filename = os.path.join("xyz", f"trajectory_{i}.xyz")
+        md.timestep()
+        rows = md.xyz_atom_list()
+        print(f"Writing time step {i} to {filename}")
+        with open(filename, "w") as f:
+            f.write(f"{len(rows)}\n")
+            for row in rows:
+                f.write(f"{row['symbol']}\t{row['x']}\t{row['y']}\t{row['z']}")
 
-    for row in rows:
-        print(f"{row['symbol']}\t{row['x']}\t{row['y']}\t{row['z']}")
+    # for row in rows:
+    #     print(f"{row['symbol']}\t{row['x']}\t{row['y']}\t{row['z']}")
 
 
 if __name__ == "__main__":
