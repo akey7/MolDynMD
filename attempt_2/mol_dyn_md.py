@@ -206,18 +206,18 @@ def main():
 
     # Now time step it for a certain number of times
     number_of_timesteps = 100
+    all_frames = []
     for i in range(number_of_timesteps):
-        filename = os.path.join("xyz", f"trajectory_{i}.xyz")
         md.timestep()
-        rows = md.xyz_atom_list()
-        print(f"Writing time step {i} to {filename}")
-        with open(filename, "w") as f:
-            f.write(f"{len(rows)}\n")
-            for row in rows:
-                f.write(f"{row['symbol']}\t{row['x']}\t{row['y']}\t{row['z']}")
+        xyz_atom_list = md.xyz_atom_list()
+        all_frames.append(str(len(xyz_atom_list)))
+        all_frames.append(f"frame\t{i}\txyz")
+        for atom in xyz_atom_list:
+            all_frames.append(f"{atom['symbol']}\t{atom['x']}\t{atom['y']}\t{atom['z']}")
 
-    # for row in rows:
-    #     print(f"{row['symbol']}\t{row['x']}\t{row['y']}\t{row['z']}")
+    fn = os.path.join("xyz", "trajectory.xyz")
+    with open(fn, "w") as f:
+        f.write("\n".join(all_frames))
 
 
 if __name__ == "__main__":
