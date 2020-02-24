@@ -209,11 +209,12 @@ def main():
     all_frames = []
     for i in range(number_of_timesteps):
         md.timestep()
+        step = i * 0.1
         xyz_atom_list = md.xyz_atom_list()
         all_frames.append(str(len(xyz_atom_list)))
         all_frames.append(f"frame\t{i}\txyz")
         for atom in xyz_atom_list:
-            all_frames.append(f"{atom['symbol']}\t{atom['x']}\t{atom['y']}\t{atom['z']}")
+            all_frames.append(f"{atom['symbol']}\t{atom['x'] + step}\t{atom['y'] + step}\t{atom['z'] + step}")
 
     fn = os.path.join("xyz", "trajectory.xyz")
     with open(fn, "w") as f:
