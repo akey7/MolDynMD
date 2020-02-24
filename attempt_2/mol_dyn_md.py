@@ -41,10 +41,9 @@ class MolDynMD:
     The edges on the graph store the stretch energy parameters for the bond.
     """
 
-    def __init__(self):
+    def __init__(self, dt_s=1.e-15, grad_h_m=1e-15):
         """
-        This initializes instance attributes which are accessible with
-        properties.
+        Private attributes
 
         self._graph: Holds the 1,2 bonds in the model.
 
@@ -52,9 +51,22 @@ class MolDynMD:
 
         Note that the index of each atom position matches in the symbols
         list and positions and velocities arrays.
+
+        Parameters
+        ----------
+        dt_s : float
+            The timestep in seconds. Should probably be set on the order
+            of femtoseconds.
+
+        grad_h_m : float
+            The h in the finite difference approximation of the gradients
+            of the energy functions.
         """
+
+        # Private attributes that other instances should not mess with
         self._graph = nx.Graph()
         self._atom_counter = 0
+        self._dt_s = dt_s
 
     def add_atom(self, symbol, initial_position, initial_velocity):
         """
@@ -146,10 +158,12 @@ class MolDynMD:
 
     def timestep(self):
         """
-        This steps the simulations by the timestep that has been previously
-        specified.
-
-        Right now it does nothing.
+        1. Compute energies of 1,2 bonds
+        2. Compute energy gradients
+        3. Compute forces
+        4. Compute accelerations
+        5. Update positions
+        6. Update velocities
         """
         pass
 
