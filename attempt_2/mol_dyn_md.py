@@ -175,7 +175,11 @@ class MolDynMD:
         return rows
 
 
-if __name__ == "__main__":
+def main():
+    """
+    Though not strictly necessary, this avoids variables being planed in th
+    outer scope of the module thereby creating shadowing problems.
+    """
     reference_length_of_HCl_m = 127.45e-12
     force_constant = -1.0
 
@@ -193,3 +197,7 @@ if __name__ == "__main__":
 
     for row in rows:
         print(f"{row['symbol']}\t{row['x']}\t{row['y']}\t{row['z']}")
+
+
+if __name__ == "__main__":
+    main()
