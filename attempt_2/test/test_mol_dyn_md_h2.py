@@ -52,9 +52,20 @@ def test_HCl_positions(hcl):
     actual_cl_position = graph.nodes[1]["position"]
     assert np.all(expected_cl_position == actual_cl_position) and np.all(expected_h_position == actual_h_position)
 
+
 def test_HCl_bond(hcl):
     graph, h, cl = hcl
     h_neighbors = list(graph[h])
     cl_neighbors = list(graph[cl])
     assert h_neighbors[0] == cl
     assert cl_neighbors[0] == h
+
+
+def test_distances(hcl):
+    """
+    There is only one edge between h and cl. That edge's distance should be
+    what was calculated when the edge was established.
+    """
+    graph, h, cl = hcl
+    for atom1, atom2, r in graph.edges.data("r"):
+        assert r == reference_length_of_HCl_m
