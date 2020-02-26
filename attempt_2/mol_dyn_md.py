@@ -205,6 +205,29 @@ class MolDynMD:
             r_j = self.graph.nodes[atom2]["position"]
             edge_data["v_stretch_gradient"] = gradient
 
+    def unit_vector(self, r_i, r_j):
+        """
+        Computes the unit vector between two positions for calculating a force
+
+        Parameters
+        ----------
+        r_i: np.array
+            The first position.
+
+        r_j: np.array
+            The second position
+
+        Returns
+        -------
+        np.array
+            The unit vector
+        """
+        difference = r_j - r_i
+        norm = linalg.norm(difference)
+        unit = difference / norm
+        return unit
+
+
     def v_stretch_gradient(self, edge_data):
         """
         Given an edge, computes the gradient of the stretch energy
@@ -229,7 +252,6 @@ class MolDynMD:
         v_ij_plus_h = 0.5 * k_IJ * (l_ij_plus_h - l_IJ_0) ** 2
         gradient = (v_ij_plus_h - v_ij) / self._grad_h_m
 
-        # edge_data["v_stretch_gradient"] = gradient
         return gradient
 
 
