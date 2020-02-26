@@ -63,10 +63,13 @@ class MolDynMD:
             of the energy functions.
         """
 
-        # Private attributes that other instances should not mess with
+        # Public attributes -- these are for easier testing.
         self.graph = nx.Graph()
+
+        # Private attributes that other instances should not mess with
         self._atom_counter = 0
         self._dt_s = dt_s
+        self._grad_h_m = grad_h_m
 
     def add_atom(self, symbol, initial_position, initial_velocity):
         """
@@ -156,8 +159,8 @@ class MolDynMD:
 
         r1 = self.graph.nodes[atom1]["position"]
         r2 = self.graph.nodes[atom2]["position"]
-        r = linalg.norm(r2 - r1)
-        self.graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ, r=r)
+        l_ij = linalg.norm(r2 - r1)
+        self.graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ, l_ij=l_ij)
 
     def xyz_atom_list(self):
         """
@@ -184,6 +187,43 @@ class MolDynMD:
             rows.append(row)
 
         return rows
+
+    def timestep(self):
+        """
+        This steps one timestep in the MD. It calls methods for the following steps
+
+        1. Compute the stretch energies.
+        2. Compute the gradients of the energies. Steps 1 and 2 are in the same
+            method call.
+        3. Compute the forces
+        4. Compute the accelerations
+        5. Update velocities and positions with this data.
+        """
+        for _, _, edge_data in self.graph.data():
+            self.v_stretch_gradient(edge_data)
+
+    def v_stretch_gradient(self, edge_data):
+        """
+        Given an edge, computes the gradient of the stretch energy
+        between the associated with that edge.
+
+        It modifies the edge in place.
+
+        Parameters
+        ----------
+        edge_data
+            The data associated with the edge
+        """
+        l_ij = edge_data["l_ij"]
+        l_IJ_0 = edge_data["l_IJ_0"]
+        k_IJ = edge_data["k_IJ"]
+        l_ij_plus_h = l_ij + self._grad_h_m
+
+        v_ij = 0.5 * k_IJ * (l_ij - l_IJ_0) ** 2
+        v_ij_plus_h = 0.5 * k_IJ * (l_ij_plus_h - l_IJ_0) ** 2
+        gradient = (v_ij_plus_h - v_ij) / self._grad_h_m
+
+        edge_data["v_stretch_gradient"] = gradient
 
 
 def main():
