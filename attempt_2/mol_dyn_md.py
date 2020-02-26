@@ -200,22 +200,25 @@ class MolDynMD:
         5. Update velocities and positions with this data.
         """
         for atom1, atom2, edge_data in self.graph.edges.data():
-            self.v_stretch_gradient(edge_data)
+            gradient = self.v_stretch_gradient(edge_data)
             r_i = self.graph.nodes[atom1]["position"]
             r_j = self.graph.nodes[atom2]["position"]
-            pass
+            edge_data["v_stretch_gradient"] = gradient
 
     def v_stretch_gradient(self, edge_data):
         """
         Given an edge, computes the gradient of the stretch energy
         between the associated with that edge.
 
-        It modifies the edge in place.
-
         Parameters
         ----------
         edge_data
             The data associated with the edge
+
+        Returns
+        -------
+        float
+            The gradient!
         """
         l_ij = edge_data["l_ij"]
         l_IJ_0 = edge_data["l_IJ_0"]
@@ -226,7 +229,8 @@ class MolDynMD:
         v_ij_plus_h = 0.5 * k_IJ * (l_ij_plus_h - l_IJ_0) ** 2
         gradient = (v_ij_plus_h - v_ij) / self._grad_h_m
 
-        edge_data["v_stretch_gradient"] = gradient
+        # edge_data["v_stretch_gradient"] = gradient
+        return gradient
 
 
 def main():
