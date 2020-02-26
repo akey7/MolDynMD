@@ -199,9 +199,11 @@ class MolDynMD:
         4. Compute the accelerations
         5. Update velocities and positions with this data.
         """
-        for u, v in self.graph.edges:
-            edge = self.graph.edges[u, v]
-            self.v_stretch_gradient(edge)
+        for atom1, atom2, edge_data in self.graph.edges.data():
+            self.v_stretch_gradient(edge_data)
+            r_i = self.graph.nodes[atom1]["position"]
+            r_j = self.graph.nodes[atom2]["position"]
+            pass
 
     def v_stretch_gradient(self, edge_data):
         """
