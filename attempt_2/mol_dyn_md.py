@@ -160,7 +160,7 @@ class MolDynMD:
         r1 = self.graph.nodes[atom1]["position"]
         r2 = self.graph.nodes[atom2]["position"]
         l_ij = linalg.norm(r2 - r1)
-        self.graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ, l_ij=l_ij)
+        self.graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ, l_ij=l_ij, v_stretch_gradient=0)
 
     def xyz_atom_list(self):
         """
@@ -199,8 +199,8 @@ class MolDynMD:
         4. Compute the accelerations
         5. Update velocities and positions with this data.
         """
-        for _, _, edge_data in self.graph.data():
-            self.v_stretch_gradient(edge_data)
+        for u, v in self.graph.edges:
+            self.v_stretch_gradient(self.graph.edges[u, v])
 
     def v_stretch_gradient(self, edge_data):
         """
