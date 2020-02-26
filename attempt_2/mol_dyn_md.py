@@ -64,7 +64,7 @@ class MolDynMD:
         """
 
         # Private attributes that other instances should not mess with
-        self._graph = nx.Graph()
+        self.graph = nx.Graph()
         self._atom_counter = 0
         self._dt_s = dt_s
 
@@ -105,11 +105,11 @@ class MolDynMD:
 
         mass_kg = atom_masses[symbol]
 
-        self._graph.add_node(self._atom_counter,
-                             symbol=symbol,
-                             position=initial_position,
-                             velocity=initial_velocity,
-                             mass_kg=mass_kg)
+        self.graph.add_node(self._atom_counter,
+                            symbol=symbol,
+                            position=initial_position,
+                            velocity=initial_velocity,
+                            mass_kg=mass_kg)
 
         self._atom_counter += 1
 
@@ -154,7 +154,7 @@ class MolDynMD:
         if k_IJ >= 0:
             raise ValueError(f"k_IJ of {k_IJ} should be negative")
 
-        self._graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ)
+        self.graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ)
 
     def timestep(self):
         """
@@ -181,8 +181,8 @@ class MolDynMD:
         """
         rows = []
 
-        for i in range(len(self._graph.nodes)):
-            atom = self._graph.nodes[i]
+        for i in range(len(self.graph.nodes)):
+            atom = self.graph.nodes[i]
             row = {
                 "symbol": atom["symbol"],
                 "x": atom["position"][0] * 1e10,
