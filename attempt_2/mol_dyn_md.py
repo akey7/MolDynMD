@@ -200,7 +200,8 @@ class MolDynMD:
         5. Update velocities and positions with this data.
         """
         for u, v in self.graph.edges:
-            self.v_stretch_gradient(self.graph.edges[u, v])
+            edge = self.graph.edges[u, v]
+            self.v_stretch_gradient(edge)
 
     def v_stretch_gradient(self, edge_data):
         """

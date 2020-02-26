@@ -80,5 +80,5 @@ def test_stretch_gradient(hcl):
 
     graph, _, _, md = hcl
     md.timestep()
-    for _, _, v_stretch_gradient in graph.edges.data("l_ij"):
-        assert v_stretch_gradient == 1.2745e-10
+    for _, _, v_stretch_gradient in graph.edges.data("v_stretch_gradient"):
+        assert v_stretch_gradient == -5.000000000085785e-16
