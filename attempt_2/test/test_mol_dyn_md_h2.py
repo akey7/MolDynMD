@@ -51,3 +51,10 @@ def test_HCl_positions(hcl):
     actual_h_position = graph.nodes[0]["position"]
     actual_cl_position = graph.nodes[1]["position"]
     assert np.all(expected_cl_position == actual_cl_position) and np.all(expected_h_position == actual_h_position)
+
+def test_HCl_bond(hcl):
+    graph, h, cl = hcl
+    h_neighbors = list(graph[h])
+    cl_neighbors = list(graph[cl])
+    assert h_neighbors[0] == cl
+    assert cl_neighbors[0] == h
