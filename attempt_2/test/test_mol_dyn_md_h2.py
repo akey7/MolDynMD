@@ -23,26 +23,26 @@ def hcl():
 
 
 def test_HCl_atom_count(hcl):
-    assert len(hcl.graph.nodes) == 2
+    assert len(hcl._graph.nodes) == 2
 
 
 def test_HCl_atom_types(hcl):
-    assert hcl.graph.nodes[0]["symbol"] == "H" and hcl.graph.nodes[1]["symbol"] == "Cl"
+    assert hcl._graph.nodes[0]["symbol"] == "H" and hcl._graph.nodes[1]["symbol"] == "Cl"
 
 
 def test_HCl_reference_length(hcl):
-    bond = hcl.graph.edges[0, 1]
+    bond = hcl._graph.edges[0, 1]
     assert bond["l_IJ_0"] == reference_length_of_HCl_m
 
 
 def test_HCl_force_constant(hcl):
-    bond = hcl.graph.edges[0, 1]
+    bond = hcl._graph.edges[0, 1]
     assert bond["k_IJ"] == force_constant
 
 
 def test_HCl_positions(hcl):
     expected_h_position = np.array([reference_length_of_HCl_m, 0, 0])
     expected_cl_position = np.zeros(3)
-    actual_h_position = hcl.graph.nodes[0]["position"]
-    actual_cl_position = hcl.graph.nodes[1]["position"]
+    actual_h_position = hcl._graph.nodes[0]["position"]
+    actual_cl_position = hcl._graph.nodes[1]["position"]
     assert np.all(expected_cl_position == actual_cl_position) and np.all(expected_h_position == actual_h_position)

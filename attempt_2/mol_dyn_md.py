@@ -9,6 +9,8 @@ of the stretch energy on pg. 25 Eqn. 2.3 is enlightening.
 """
 
 
+import os
+
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -39,26 +41,32 @@ class MolDynMD:
     The edges on the graph store the stretch energy parameters for the bond.
     """
 
-    def __init__(self):
+    def __init__(self, dt_s=1.e-15, grad_h_m=1e-15):
         """
-        This initializes instance attributes which are accessible with
-        properties.
+        Private attributes
 
-        self.graph: Holds the 1,2 bonds in the model.
+        self._graph: Holds the 1,2 bonds in the model.
 
-        self.symbols: The element symbols of each atom in a list
-
-        self.positions: A numpy array with each row being a
-            cartesian position of that atom.
-
-        self.velocities: A numpy array with each row being the velocity
-            of the atom in that positions.
+        self._atom_counter: Holds a unique serial number for each atom.
 
         Note that the index of each atom position matches in the symbols
         list and positions and velocities arrays.
+
+        Parameters
+        ----------
+        dt_s : float
+            The timestep in seconds. Should probably be set on the order
+            of femtoseconds.
+
+        grad_h_m : float
+            The h in the finite difference approximation of the gradients
+            of the energy functions.
         """
-        self.graph = nx.Graph()
-        self.atom_counter = 0
+
+        # Private attributes that other instances should not mess with
+        self._graph = nx.Graph()
+        self._atom_counter = 0
+        self._dt_s = dt_s
 
     def add_atom(self, symbol, initial_position, initial_velocity):
         """
@@ -97,15 +105,15 @@ class MolDynMD:
 
         mass_kg = atom_masses[symbol]
 
-        self.graph.add_node(self.atom_counter,
-                            symbol=symbol,
-                            position=initial_position,
-                            velocity=initial_velocity,
-                            mass_kg=mass_kg)
+        self._graph.add_node(self._atom_counter,
+                             symbol=symbol,
+                             position=initial_position,
+                             velocity=initial_velocity,
+                             mass_kg=mass_kg)
 
-        self.atom_counter += 1
+        self._atom_counter += 1
 
-        return self.atom_counter - 1
+        return self._atom_counter - 1
 
     def add_bond(self, atom1, atom2, l_IJ_0, k_IJ):
         """
@@ -134,10 +142,10 @@ class MolDynMD:
             Raised if the force constant >= 0, or if the reference length is
             negative. Also raised if atom1 or atom2 point to non existent atoms
         """
-        if atom1 > self.atom_counter - 1:
+        if atom1 > self._atom_counter - 1:
             raise ValueError(f"atom1 {atom1} is out of range")
 
-        if atom2 > self.atom_counter - 1:
+        if atom2 > self._atom_counter - 1:
             raise ValueError(f"atom2 {atom2} is out of range")
 
         if l_IJ_0 <= 0:
@@ -146,7 +154,18 @@ class MolDynMD:
         if k_IJ >= 0:
             raise ValueError(f"k_IJ of {k_IJ} should be negative")
 
-        self.graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ)
+        self._graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ)
+
+    def timestep(self):
+        """
+        1. Compute energies of 1,2 bonds
+        2. Compute energy gradients
+        3. Compute forces
+        4. Compute accelerations
+        5. Update positions
+        6. Update velocities
+        """
+        pass
 
     def xyz_atom_list(self):
         """
@@ -162,8 +181,8 @@ class MolDynMD:
         """
         rows = []
 
-        for i in range(len(self.graph.nodes)):
-            atom = self.graph.nodes[i]
+        for i in range(len(self._graph.nodes)):
+            atom = self._graph.nodes[i]
             row = {
                 "symbol": atom["symbol"],
                 "x": atom["position"][0] * 1e10,
@@ -175,11 +194,16 @@ class MolDynMD:
         return rows
 
 
-if __name__ == "__main__":
+def main():
+    """
+    Though not strictly necessary, this avoids variables being planed in th
+    outer scope of the module thereby creating shadowing problems.
+    """
+    md = MolDynMD()
+
+    # Setup the initial and bond conditions
     reference_length_of_HCl_m = 127.45e-12
     force_constant = -1.0
-
-    md = MolDynMD()
     h_initial_position = np.array([reference_length_of_HCl_m, 0, 0])
     cl_initial_position = np.array([0., 0., 0.])
     h_initial_velocity = np.array([0., 0., 0.])
@@ -187,9 +211,23 @@ if __name__ == "__main__":
     h1 = md.add_atom("H", initial_position=h_initial_position, initial_velocity=h_initial_velocity)
     cl = md.add_atom("Cl", initial_position=cl_initial_position, initial_velocity=cl_initial_velocity)
     md.add_bond(h1, cl, l_IJ_0=reference_length_of_HCl_m, k_IJ=force_constant)
-    rows = md.xyz_atom_list()
 
-    print(f"{len(rows)}\n")
+    # Now time step it for a certain number of times
+    number_of_timesteps = 100
+    all_frames = []
+    for i in range(number_of_timesteps):
+        md.timestep()
+        step = i * 0.1
+        xyz_atom_list = md.xyz_atom_list()
+        all_frames.append(str(len(xyz_atom_list)))
+        all_frames.append(f"frame\t{i}\txyz")
+        for atom in xyz_atom_list:
+            all_frames.append(f"{atom['symbol']}\t{atom['x'] + step}\t{atom['y'] + step}\t{atom['z'] + step}")
 
-    for row in rows:
-        print(f"{row['symbol']}\t{row['x']}\t{row['y']}\t{row['z']}")
+    fn = os.path.join("xyz", "trajectory.xyz")
+    with open(fn, "w") as f:
+        f.write("\n".join(all_frames))
+
+
+if __name__ == "__main__":
+    main()
