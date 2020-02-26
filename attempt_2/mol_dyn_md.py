@@ -13,7 +13,7 @@ import os
 
 import networkx as nx
 import numpy as np
-import pandas as pd
+import numpy.linalg as linalg
 
 from collections import namedtuple
 
@@ -154,18 +154,10 @@ class MolDynMD:
         if k_IJ >= 0:
             raise ValueError(f"k_IJ of {k_IJ} should be negative")
 
-        self.graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ)
-
-    def timestep(self):
-        """
-        1. Compute energies of 1,2 bonds
-        2. Compute energy gradients
-        3. Compute forces
-        4. Compute accelerations
-        5. Update positions
-        6. Update velocities
-        """
-        pass
+        r1 = self.graph.nodes[atom1]["position"]
+        r2 = self.graph.nodes[atom2]["position"]
+        r = linalg.norm(r2 - r1)
+        self.graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ, r=r)
 
     def xyz_atom_list(self):
         """
