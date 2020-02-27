@@ -208,16 +208,27 @@ class MolDynMD:
         for i in self.graph:
             atoms[i]["force_sum"] = np.array([0., 0., 0.])
 
-        # Compute the energies, gradients and forces
-        for i, j, edge_data in self.graph.edges.data():
-            gradient = self.v_stretch_gradient(edge_data)
-            r_i = atoms[i]["position"]
-            r_j = atoms[j]["position"]
-            edge_data["v_stretch_gradient"] = gradient
-            force_i = -gradient * self.unit_vector(r_i, r_j)
-            force_j = -gradient * self.unit_vector(r_j, r_i)
-            atoms[i]["force_sum"] = atoms[i]["force_sum"] + force_i
-            atoms[j]["force_sum"] = atoms[j]["force_sum"] + force_j
+        # # Compute the energies, gradients and forces
+        # for i, j, edge_data in self.graph.edges.data():
+        #     gradient = self.v_stretch_gradient(edge_data)
+        #     r_i = atoms[i]["position"]
+        #     r_j = atoms[j]["position"]
+        #     edge_data["v_stretch_gradient"] = gradient
+        #     force_i = -gradient * self.unit_vector(r_i, r_j)
+        #     force_j = -gradient * self.unit_vector(r_j, r_i)
+        #     atoms[i]["force_sum"] = atoms[i]["force_sum"] + force_i
+        #     atoms[j]["force_sum"] = atoms[j]["force_sum"] + force_j
+
+        # Calculate stretch forces
+        for i in self.graph:
+            position_i = atoms[i]["position"]
+            for _, j, bond in self.graph.edges(nbunch=i, data=True):
+                position_j = atoms[j]["position"]
+                l_ij = linalg.norm(position_j - position_i)
+                k_IJ = bond["k_IJ"]
+                l_IJ_0 = bond["l_IJ_0"]
+                grad = self.v_stretch_gradient(l_ij=l_ij, k_IJ=k_IJ, l_IJ_0=l_IJ_0)
+                atoms[i]["force_sum"] += -grad * self.unit_vector(position_i, position_j)
 
         # Now compute the new velocities and positions
         for i in self.graph:
@@ -247,15 +258,21 @@ class MolDynMD:
         unit = difference / norm
         return unit
 
-    def v_stretch_gradient(self, edge_data):
+    def v_stretch_gradient(self, l_ij, k_IJ, l_IJ_0):
         """
         Given an edge, computes the gradient of the stretch energy
         between the associated with that edge.
 
         Parameters
         ----------
-        edge_data
-            The data associated with the edge
+        l_ij: float
+            The length of the bond.
+
+        k_IJ: float
+            The force constant of the bond.
+
+        l_IJ_0: float
+            The characteristic length of the bond
 
         Returns
         -------
@@ -263,13 +280,9 @@ class MolDynMD:
             The gradient!
         """
         h = self.grad_h_m
-        l_ij = edge_data["l_ij"]
-        l_IJ_0 = edge_data["l_IJ_0"]
-        k_IJ = edge_data["k_IJ"]
-        l_ij_plus_h = l_ij + h
 
         v_ij = 0.5 * k_IJ * (l_ij - l_IJ_0) ** 2
-        v_ij_plus_h = 0.5 * k_IJ * (l_ij_plus_h - l_IJ_0) ** 2
+        v_ij_plus_h = 0.5 * k_IJ * (l_ij + h - l_IJ_0) ** 2
         gradient = (v_ij_plus_h - v_ij) / h
 
         return gradient
@@ -294,16 +307,15 @@ def main():
     md.add_bond(h1, cl, l_IJ_0=reference_length_of_HCl_m, k_IJ=force_constant)
 
     # Now time step it for a certain number of times
-    number_of_timesteps = 100
+    number_of_timesteps = 1000
     all_frames = []
     for i in range(number_of_timesteps):
         md.timestep()
-        step = i * 0.1
         xyz_atom_list = md.xyz_atom_list()
         all_frames.append(str(len(xyz_atom_list)))
         all_frames.append(f"frame\t{i}\txyz")
         for atom in xyz_atom_list:
-            all_frames.append(f"{atom['symbol']}\t{atom['x'] + step}\t{atom['y'] + step}\t{atom['z'] + step}")
+            all_frames.append(f"{atom['symbol']}\t{atom['x']}\t{atom['y']}\t{atom['z']}")
 
     fn = os.path.join("xyz", "trajectory.xyz")
     with open(fn, "w") as f:
