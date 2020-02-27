@@ -68,8 +68,8 @@ class MolDynMD:
 
         # Private attributes that other instances should not mess with
         self._atom_counter = 0
-        self._dt_s = dt_s
-        self._grad_h_m = grad_h_m
+        self.dt_s = dt_s
+        self.grad_h_m = grad_h_m
 
     def add_atom(self, symbol, initial_position, initial_velocity):
         """
@@ -112,7 +112,8 @@ class MolDynMD:
                             symbol=symbol,
                             position=initial_position,
                             velocity=initial_velocity,
-                            mass_kg=mass_kg)
+                            mass_kg=mass_kg,
+                            force_sum=np.array([0., 0., 0.]))
 
         self._atom_counter += 1
 
@@ -199,13 +200,30 @@ class MolDynMD:
         4. Compute the accelerations
         5. Update velocities and positions with this data.
         """
-        for atom1, atom2, edge_data in self.graph.edges.data():
-            gradient = self.v_stretch_gradient(edge_data)
-            r_i = self.graph.nodes[atom1]["position"]
-            r_j = self.graph.nodes[atom2]["position"]
-            edge_data["v_stretch_gradient"] = gradient
-            force = -gradient * self.unit_vector(r_i, r_j)
+        # Get all the nodes in the graph. The nodes are the atoms.
+        atoms = self.graph.nodes
 
+        # Forces are accumulated into vectors on each atom/node.
+        # Reset them to zero here
+        for i in self.graph:
+            atoms[i]["force_sum"] = np.array([0., 0., 0.])
+
+        # Compute the energies, gradients and forces
+        for i, j, edge_data in self.graph.edges.data():
+            gradient = self.v_stretch_gradient(edge_data)
+            r_i = atoms[i]["position"]
+            r_j = atoms[j]["position"]
+            edge_data["v_stretch_gradient"] = gradient
+            force_i = -gradient * self.unit_vector(r_i, r_j)
+            force_j = -gradient * self.unit_vector(r_j, r_i)
+            atoms[i]["force_sum"] = atoms[i]["force_sum"] + force_i
+            atoms[j]["force_sum"] = atoms[j]["force_sum"] + force_j
+
+        # Now compute the new velocities and positions
+        for i in self.graph:
+            atoms[i]["position"] += atoms[i]["velocity"] * self.dt_s
+            accel = atoms[i]["force_sum"] / atoms[i]["mass_kg"]
+            atoms[i]["velocity"] += accel * self.dt_s
 
     def unit_vector(self, r_i, r_j):
         """
@@ -244,7 +262,7 @@ class MolDynMD:
         float
             The gradient!
         """
-        h = self._grad_h_m
+        h = self.grad_h_m
         l_ij = edge_data["l_ij"]
         l_IJ_0 = edge_data["l_IJ_0"]
         k_IJ = edge_data["k_IJ"]
