@@ -75,14 +75,23 @@ def test_distances(hcl):
 def test_stretch_gradient(hcl):
     """
     Once again, because this is a diatomic, all the gradients should be the same.
-
     Also, there must be one timestep.
     """
-
     graph, _, _, md = hcl
     md.timestep()
     for _, _, v_stretch_gradient in graph.edges.data("v_stretch_gradient"):
         assert v_stretch_gradient == -5.000000000085785e-16
+
+
+def test_velocities(hcl):
+    graph, _, _, md = hcl
+    md.timestep()
+    actual_velocities = graph.nodes.data("velocity")
+    expected_velocities = [np.array([-0.00029876, 0., 0.]), np.array([8.49312805e-06, 0.00000000e+00, 0.00000000e+00])]
+
+    # actual_velocities is comprised of strange tuples that must be unpacked first.
+    for (_, actual), expected in zip(actual_velocities, expected_velocities):
+        assert np.allclose(actual, expected)
 
 
 def test_unit_vector(hcl):
