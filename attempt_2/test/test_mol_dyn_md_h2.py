@@ -94,6 +94,23 @@ def test_velocities(hcl):
         assert np.allclose(actual, expected)
 
 
+def test_positions(hcl):
+    graph, _, _, md = hcl
+
+    # The initial velocities are 0, so the positions after the first step can be zero
+    # Once there is some acceleration in there, the atoms can move, so go for two
+    # timesteps.
+    md.timestep()
+    md.timestep()
+
+    actual_positions = graph.nodes.data("position")
+    expected_positions = [np.array([1.2745e-10, 0.0000e+00, 0.0000e+00]),
+                          np.array([8.49312805e-21, 0.00000000e+00, 0.00000000e+00])]
+
+    for (_, actual), expected in zip(actual_positions, expected_positions):
+        assert np.allclose(actual, expected)
+
+
 def test_unit_vector(hcl):
     _, _, _, md = hcl
     r_j = np.array([3, 3, 3])
