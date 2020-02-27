@@ -208,17 +208,6 @@ class MolDynMD:
         for i in self.graph:
             atoms[i]["force_sum"] = np.array([0., 0., 0.])
 
-        # # Compute the energies, gradients and forces
-        # for i, j, edge_data in self.graph.edges.data():
-        #     gradient = self.v_stretch_gradient(edge_data)
-        #     r_i = atoms[i]["position"]
-        #     r_j = atoms[j]["position"]
-        #     edge_data["v_stretch_gradient"] = gradient
-        #     force_i = -gradient * self.unit_vector(r_i, r_j)
-        #     force_j = -gradient * self.unit_vector(r_j, r_i)
-        #     atoms[i]["force_sum"] = atoms[i]["force_sum"] + force_i
-        #     atoms[j]["force_sum"] = atoms[j]["force_sum"] + force_j
-
         # Calculate stretch forces
         for i in self.graph:
             position_i = atoms[i]["position"]
