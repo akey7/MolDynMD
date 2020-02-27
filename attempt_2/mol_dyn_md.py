@@ -63,10 +63,13 @@ class MolDynMD:
             of the energy functions.
         """
 
-        # Private attributes that other instances should not mess with
+        # Public attributes -- these are for easier testing.
         self.graph = nx.Graph()
+
+        # Private attributes that other instances should not mess with
         self._atom_counter = 0
-        self._dt_s = dt_s
+        self.dt_s = dt_s
+        self.grad_h_m = grad_h_m
 
     def add_atom(self, symbol, initial_position, initial_velocity):
         """
@@ -109,7 +112,8 @@ class MolDynMD:
                             symbol=symbol,
                             position=initial_position,
                             velocity=initial_velocity,
-                            mass_kg=mass_kg)
+                            mass_kg=mass_kg,
+                            force_sum=np.array([0., 0., 0.]))
 
         self._atom_counter += 1
 
@@ -156,8 +160,8 @@ class MolDynMD:
 
         r1 = self.graph.nodes[atom1]["position"]
         r2 = self.graph.nodes[atom2]["position"]
-        r = linalg.norm(r2 - r1)
-        self.graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ, r=r)
+        l_ij = linalg.norm(r2 - r1)
+        self.graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ, l_ij=l_ij, v_stretch_gradient=0)
 
     def xyz_atom_list(self):
         """
@@ -185,6 +189,91 @@ class MolDynMD:
 
         return rows
 
+    def timestep(self):
+        """
+        This steps one timestep in the MD. It calls methods for the following steps
+
+        1. Compute the stretch energies.
+        2. Compute the gradients of the energies. Steps 1 and 2 are in the same
+            method call.
+        3. Compute the forces
+        4. Compute the accelerations
+        5. Update velocities and positions with this data.
+        """
+        # Get all the nodes in the graph. The nodes are the atoms.
+        atoms = self.graph.nodes
+
+        # Forces are accumulated into vectors on each atom/node.
+        # Reset them to zero here
+        for i in self.graph:
+            atoms[i]["force_sum"] = np.array([0., 0., 0.])
+
+        # Compute the energies, gradients and forces
+        for i, j, edge_data in self.graph.edges.data():
+            gradient = self.v_stretch_gradient(edge_data)
+            r_i = atoms[i]["position"]
+            r_j = atoms[j]["position"]
+            edge_data["v_stretch_gradient"] = gradient
+            force_i = -gradient * self.unit_vector(r_i, r_j)
+            force_j = -gradient * self.unit_vector(r_j, r_i)
+            atoms[i]["force_sum"] = atoms[i]["force_sum"] + force_i
+            atoms[j]["force_sum"] = atoms[j]["force_sum"] + force_j
+
+        # Now compute the new velocities and positions
+        for i in self.graph:
+            atoms[i]["position"] += atoms[i]["velocity"] * self.dt_s
+            accel = atoms[i]["force_sum"] / atoms[i]["mass_kg"]
+            atoms[i]["velocity"] += accel * self.dt_s
+
+    def unit_vector(self, r_i, r_j):
+        """
+        Computes the unit vector between two positions for calculating a force
+
+        Parameters
+        ----------
+        r_i: np.array
+            The first position.
+
+        r_j: np.array
+            The second position.
+
+        Returns
+        -------
+        np.array
+            The unit vector
+        """
+        difference = r_j - r_i
+        norm = linalg.norm(difference)
+        unit = difference / norm
+        return unit
+
+    def v_stretch_gradient(self, edge_data):
+        """
+        Given an edge, computes the gradient of the stretch energy
+        between the associated with that edge.
+
+        Parameters
+        ----------
+        edge_data
+            The data associated with the edge
+
+        Returns
+        -------
+        float
+            The gradient!
+        """
+        h = self.grad_h_m
+        l_ij = edge_data["l_ij"]
+        l_IJ_0 = edge_data["l_IJ_0"]
+        k_IJ = edge_data["k_IJ"]
+        l_ij_plus_h = l_ij + h
+
+        v_ij = 0.5 * k_IJ * (l_ij - l_IJ_0) ** 2
+        v_ij_plus_h = 0.5 * k_IJ * (l_ij_plus_h - l_IJ_0) ** 2
+        gradient = (v_ij_plus_h - v_ij) / h
+
+        return gradient
+
 
 def main():
     """
@@ -196,7 +285,7 @@ def main():
     # Setup the initial and bond conditions
     reference_length_of_HCl_m = 127.45e-12
     force_constant = -1.0
-    h_initial_position = np.array([reference_length_of_HCl_m, 0, 0])
+    h_initial_position = np.array([reference_length_of_HCl_m, 0., 0.])
     cl_initial_position = np.array([0., 0., 0.])
     h_initial_velocity = np.array([0., 0., 0.])
     cl_initial_velocity = np.array([0., 0., 0.])
