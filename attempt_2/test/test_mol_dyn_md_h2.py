@@ -83,6 +83,19 @@ def test_stretch_gradient(hcl):
         assert v_stretch_gradient == -5.000000000085785e-16
 
 
+def test_unit_vector(hcl):
+    _, _, _, md = hcl
+    r_j = np.array([3, 3, 3])
+    r_i = np.array([0, 0, 0])
+    expected = np.array([0.57735027, 0.57735027, 0.57735027])
+    actual = md.unit_vector(r_i, r_j)
+    assert np.allclose(expected, actual)
+
+
+##########################################################################
+# REGRESSION TESTS
+##########################################################################
+
 def test_velocities(hcl):
     graph, _, _, md = hcl
     md.timestep()
@@ -109,12 +122,3 @@ def test_positions(hcl):
 
     for (_, actual), expected in zip(actual_positions, expected_positions):
         assert np.allclose(actual, expected)
-
-
-def test_unit_vector(hcl):
-    _, _, _, md = hcl
-    r_j = np.array([3, 3, 3])
-    r_i = np.array([0, 0, 0])
-    expected = np.array([0.57735027, 0.57735027, 0.57735027])
-    actual = md.unit_vector(r_i, r_j)
-    assert np.allclose(expected, actual)
