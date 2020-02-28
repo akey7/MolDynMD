@@ -15,16 +15,14 @@ import networkx as nx
 import numpy as np
 import numpy.linalg as linalg
 
-from collections import namedtuple
-
-# Defined outside the class so that it could be used by other code.
-# However, do not modify it!
 
 kg_per_amu = 1.66054e-27
 
 atom_masses = {
     "H": 1.00784 * kg_per_amu,
-    "Cl": 35.453 * kg_per_amu
+    "C": 12.011 * kg_per_amu,
+    "O": 15.999 * kg_per_amu,
+    "Cl": 35.453 * kg_per_amu,
 }
 
 
@@ -62,12 +60,9 @@ class MolDynMD:
             The h in the finite difference approximation of the gradients
             of the energy functions.
         """
-
-        # Public attributes -- these are for easier testing.
         self.graph = nx.Graph()
-
-        # Private attributes that other instances should not mess with
-        self._atom_counter = 0
+        self.atom_counter = 0
+        self.frames = []
         self.dt_s = dt_s
         self.grad_h_m = grad_h_m
 
@@ -108,16 +103,16 @@ class MolDynMD:
 
         mass_kg = atom_masses[symbol]
 
-        self.graph.add_node(self._atom_counter,
+        self.graph.add_node(self.atom_counter,
                             symbol=symbol,
                             position=initial_position,
                             velocity=initial_velocity,
                             mass_kg=mass_kg,
                             force_sum=np.array([0., 0., 0.]))
 
-        self._atom_counter += 1
+        self.atom_counter += 1
 
-        return self._atom_counter - 1
+        return self.atom_counter - 1
 
     def add_bond(self, atom1, atom2, l_IJ_0, k_IJ):
         """
@@ -146,10 +141,10 @@ class MolDynMD:
             Raised if the force constant >= 0, or if the reference length is
             negative. Also raised if atom1 or atom2 point to non existent atoms
         """
-        if atom1 > self._atom_counter - 1:
+        if atom1 > self.atom_counter - 1:
             raise ValueError(f"atom1 {atom1} is out of range")
 
-        if atom2 > self._atom_counter - 1:
+        if atom2 > self.atom_counter - 1:
             raise ValueError(f"atom2 {atom2} is out of range")
 
         if l_IJ_0 <= 0:
@@ -276,40 +271,39 @@ class MolDynMD:
 
         return gradient
 
+    def run_trajectory(self, timesteps):
+        """
+        Runs the MD through a number of timesteps and returns a list of lists
+        of dictionaries.
 
-def main():
-    """
-    Though not strictly necessary, this avoids variables being planed in th
-    outer scope of the module thereby creating shadowing problems.
-    """
-    md = MolDynMD()
+        Since the outcome of this will go into an animation, each list of atoms
+        in a timestep will be called a frame.
 
-    # Setup the initial and bond conditions
-    reference_length_of_HCl_m = 127.45e-12
-    force_constant = -1.0
-    h_initial_position = np.array([reference_length_of_HCl_m * 0.9, 0., 0.])
-    cl_initial_position = np.array([0., 0., 0.])
-    h_initial_velocity = np.array([0., 0., 0.])
-    cl_initial_velocity = np.array([0., 0., 0.])
-    h1 = md.add_atom("H", initial_position=h_initial_position, initial_velocity=h_initial_velocity)
-    cl = md.add_atom("Cl", initial_position=cl_initial_position, initial_velocity=cl_initial_velocity)
-    md.add_bond(h1, cl, l_IJ_0=reference_length_of_HCl_m, k_IJ=force_constant)
+        Parameters
+        ----------
+        timesteps: int
+            The number of timesteps to run. The total amount of time in the run
+            is timesteps * self.dt_s
+        """
+        self.frames = []
 
-    # Now time step it for a certain number of times
-    number_of_timesteps = 1000
-    all_frames = []
-    for i in range(number_of_timesteps):
-        md.timestep()
-        xyz_atom_list = md.xyz_atom_list()
-        all_frames.append(str(len(xyz_atom_list)))
-        all_frames.append(f"frame\t{i}\txyz")
-        for atom in xyz_atom_list:
-            all_frames.append(f"{atom['symbol']}\t{atom['x']}\t{atom['y']}\t{atom['z']}")
+        for _ in range(timesteps):
+            self.timestep()
+            self.frames.append(self.xyz_atom_list())
 
-    fn = os.path.join("xyz", "trajectory.xyz")
-    with open(fn, "w") as f:
-        f.write("\n".join(all_frames))
+    def write_trajectory_to_xyz_file(self, filename):
+        """
+        This writes the trajectory to a .xyz file
 
-
-if __name__ == "__main__":
-    main()
+        Parameters
+        ----------
+        filename: str
+            The absolute pathname.
+        """
+        fn = os.path.join("xyz", "trajectory.xyz")
+        with open(fn, "w") as f:
+            for idx, frame in enumerate(self.frames):
+                print(len(frame), file=f)
+                print(f"frame\t{idx}\txyz", file=f)
+                for atom in frame:
+                    print(f"{atom['symbol']}\t{atom['x']}\t{atom['y']}\t{atom['z']}", file=f)
