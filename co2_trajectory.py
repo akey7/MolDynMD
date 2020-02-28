@@ -6,10 +6,10 @@ from mol_dyn_md import MolDynMD
 md = MolDynMD()
 
 bond_length_m = 116.3e-12
-force_constant = -1.0
+force_constant = -10.0
 
-o1_initial_position = np.array([bond_length_m, 0., 0.])
-o2_initial_position = np.array([-bond_length_m, 0., 0.])
+o1_initial_position = np.array([bond_length_m * 0.9, 0., 0.])
+o2_initial_position = np.array([-bond_length_m * 0.9, 0., 0.])
 c_initial_position = np.array([0., 0., 0.])
 
 o1_initial_velocity = np.array([0., 0., 0.])
