@@ -276,6 +276,35 @@ class MolDynMD:
 
         return gradient
 
+    def run_trajectory(self, timesteps):
+        """
+        Runs the MD through a number of timesteps and returns a list of lists
+        of dictionaries.
+
+        Since the outcome of this will go into an animation, each list of atoms
+        in a timestep will be called a frame.
+
+        Parameters
+        ----------
+        timesteps: int
+            The number of timesteps to run. The total amount of time in the run
+            is timesteps * self.dt_s
+
+        Returns
+        -------
+        list(list(dict))
+            Each dictionary has the xyz position of an atom and its element
+            symbol. Each list contains dictionaries for all atoms in that
+            timestep. The list of lists contains all the timesteps' atoms
+        """
+        all_frames = []
+
+        for _ in range(timesteps):
+            self.timestep()
+            all_frames.append(self.xyz_atom_list())
+
+        return all_frames
+
 
 def main():
     """
@@ -295,20 +324,15 @@ def main():
     cl = md.add_atom("Cl", initial_position=cl_initial_position, initial_velocity=cl_initial_velocity)
     md.add_bond(h1, cl, l_IJ_0=reference_length_of_HCl_m, k_IJ=force_constant)
 
-    # Now time step it for a certain number of times
-    number_of_timesteps = 1000
-    all_frames = []
-    for i in range(number_of_timesteps):
-        md.timestep()
-        xyz_atom_list = md.xyz_atom_list()
-        all_frames.append(str(len(xyz_atom_list)))
-        all_frames.append(f"frame\t{i}\txyz")
-        for atom in xyz_atom_list:
-            all_frames.append(f"{atom['symbol']}\t{atom['x']}\t{atom['y']}\t{atom['z']}")
+    frames = md.run_trajectory(1000)
 
     fn = os.path.join("xyz", "trajectory.xyz")
     with open(fn, "w") as f:
-        f.write("\n".join(all_frames))
+        for idx, frame in enumerate(frames):
+            print(len(frame), file=f)
+            print(f"frame\t{idx}\txyz", file=f)
+            for atom in frame:
+                print(f"{atom['symbol']}\t{atom['x']}\t{atom['y']}\t{atom['z']}", file=f)
 
 
 if __name__ == "__main__":
