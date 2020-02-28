@@ -20,7 +20,9 @@ kg_per_amu = 1.66054e-27
 
 atom_masses = {
     "H": 1.00784 * kg_per_amu,
-    "Cl": 35.453 * kg_per_amu
+    "C": 12.011 * kg_per_amu,
+    "O": 15.999 * kg_per_amu,
+    "Cl": 35.453 * kg_per_amu,
 }
 
 
