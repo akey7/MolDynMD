@@ -130,5 +130,5 @@ dmypy.json
 
 .idea/
 
-xyz/*
+*.xyz
 .DS_Store
