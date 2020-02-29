@@ -27,12 +27,16 @@ def hcl():
     cl_initial_velocity = np.array([0., 0., 0.])
     h = md.add_atom("H", initial_position=h_initial_position, initial_velocity=h_initial_velocity)
     cl = md.add_atom("Cl", initial_position=cl_initial_position, initial_velocity=cl_initial_velocity)
-    md.add_bond(h, cl, l_IJ_0=reference_length_of_HCl_m, k_IJ=force_constant)
+    md.add_bond(h, cl, r_ab_0=reference_length_of_HCl_m, k_ab=force_constant)
     return HClFixture(graph=md.graph, h=h, cl=cl)
 
 
 def test_hcl_atom_count(hcl):
     assert len(hcl.graph.nodes) == 2
+
+
+def test_hcl_bond_count(hcl):
+    assert len(hcl.graph.edges) == 1
 
 
 # def test_positions(hcl):

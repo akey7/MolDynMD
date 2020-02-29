@@ -33,19 +33,16 @@ class Atom:
     a: np.array
 
 
+@dataclass
+class Bond:
+    """
+    See Jensen pg. 25
+    """
+    k_ab: float
+    r_ab_0: float
+
+
 class MolDynMD:
-    """
-    This is a molecular dynamics class. It only supports stretch energy
-
-    Use MKS units for everything here and life will be easier.
-
-    The nodes on the graph store the indecies into which the atom types
-    can be found, as well as the positions and velocities (the latter two
-    being store in NumPy arrays)
-
-    The edges on the graph store the stretch energy parameters for the bond.
-    """
-
     def __init__(self, timesteps=1000, dt=1.e-15, h=1e-15):
         self.graph = nx.Graph()
         self.atom_counter = 0
@@ -66,48 +63,12 @@ class MolDynMD:
         v[0] = initial_velocity
         self.graph.add_node(self.atom_counter, atom=atom)
         self.atom_counter += 1
-
         return self.atom_counter - 1
 
-    def add_bond(self, atom1, atom2, l_IJ_0, k_IJ):
+    def add_bond(self, atom_a, atom_b, r_ab_0, k_ab):
         """
-        This adds a bond as an edge on the graph.
-
-        This is an undirected graph, so we don't need to add edges going in
-        both directions.
-
-        Parameters
-        ----------
-        atom1 : int
-            Index of the first atom in the bond.
-
-        atom2 : int
-            Index of the second atom in the bond
-
-        l_IJ_0 : float
-            Reference length of the bond. See the Levine citation above.
-
-        k_IJ : float
-            Force constant of the bond.
-
-        Raises
-        ------
-        ValueError
-            Raised if the force constant >= 0, or if the reference length is
-            negative. Also raised if atom1 or atom2 point to non existent atoms
+        See Bond dataclass docstring above for citation of what these variables mean.
         """
         atoms = self.graph.nodes
-
-        if atom1 > self.atom_counter - 1:
-            raise ValueError(f"atom1 {atom1} is out of range")
-
-        if atom2 > self.atom_counter - 1:
-            raise ValueError(f"atom2 {atom2} is out of range")
-
-        if l_IJ_0 <= 0:
-            raise ValueError(f"l_IJ_0 of {l_IJ_0} must be greater than or equal to 0")
-
-        if k_IJ >= 0:
-            raise ValueError(f"k_IJ of {k_IJ} should be negative")
-
-        self.graph.add_edge(atom1, atom2, l_IJ_0=l_IJ_0, k_IJ=k_IJ)
+        bond = Bond(r_ab_0=r_ab_0, k_ab=k_ab)
+        self.graph.add_edge(atom_a, atom_b, bond=bond)
