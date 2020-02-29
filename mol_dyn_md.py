@@ -9,11 +9,9 @@ of the stretch energy on pg. 25 Eqn. 2.3 is enlightening.
 """
 
 
-import os
-
+from dataclasses import dataclass
 import networkx as nx
 import numpy as np
-from numpy.linalg import norm
 
 
 kg_per_amu = 1.66054e-27
@@ -24,6 +22,15 @@ atom_masses = {
     "O": 16,
     "Cl": 35,
 }
+
+
+@dataclass
+class Atom:
+    m: float
+    x: np.array
+    v: np.array
+    f: np.array
+    a: np.array
 
 
 class MolDynMD:
@@ -50,23 +57,14 @@ class MolDynMD:
 
     def add_atom(self, symbol, initial_position, initial_velocity):
         m = atom_masses[symbol]
-
         x = np.zeros((self.timesteps, 3))
         v = np.zeros((self.timesteps, 3))
         a = np.zeros((self.timesteps, 3))
         f = np.zeros((self.timesteps, 3))
-
+        atom = Atom(m=m, x=x, v=v, a=a, f=f)
         x[0] = initial_position
         v[0] = initial_velocity
-
-        self.graph.add_node(self.atom_counter,
-                            symbol=symbol,
-                            x=initial_position,
-                            v=initial_velocity,
-                            m=m,
-                            a=a,
-                            f=f)
-
+        self.graph.add_node(self.atom_counter, atom=atom)
         self.atom_counter += 1
 
         return self.atom_counter - 1
