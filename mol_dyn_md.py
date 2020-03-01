@@ -67,6 +67,18 @@ class MolDynMD:
         self.t = 0
 
     def add_atom(self, symbol, initial_position, initial_velocity):
+        """
+        Parameters
+        ----------
+        symbol: str
+            The element symbol
+            
+        initial_position: np.array
+            The 3 dimensional vector of the initial position
+            
+        initial_velocity: np.array
+            The 3 dimensional vector
+        """
         m = atom_masses[symbol]
         x = np.zeros((self.timesteps, 3))
         v = np.zeros((self.timesteps, 3))
@@ -79,12 +91,17 @@ class MolDynMD:
         self.atom_counter += 1
         return self.atom_counter - 1
 
-    def add_bond(self, atom_a, atom_b, l_IJ_0, k_IJ):
+    def add_bond(self, atom_i, atom_j, l_IJ_0, k_IJ):
         """
         See Bond dataclass docstring above for citation of what these variables mean.
+        
+        Parameters
+        ----------
+        atom_i: int
+            The integer ID of the graph node that is atom a
         """
         bond = Bond(l_IJ_0=l_IJ_0, k_IJ=k_IJ)
-        self.graph.add_edge(atom_a, atom_b, bond=bond)
+        self.graph.add_edge(atom_i, atom_j, bond=bond)
 
     def stretch_gradient(self, xi, xj, l_IJ_0, k_IJ):
         """
