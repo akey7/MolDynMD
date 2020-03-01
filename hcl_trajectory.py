@@ -3,7 +3,7 @@ import numpy as np
 from mol_dyn_md import MolDynMD
 
 
-md = MolDynMD(timesteps=10)
+md = MolDynMD()
 
 reference_length_of_HCl_m = 127.45e-12
 force_constant = -1.0
@@ -17,7 +17,7 @@ md.add_bond(h1, cl, l_IJ_0=reference_length_of_HCl_m, k_IJ=force_constant)
 
 md.run()
 
-# filename = os.path.join("xyz", "HCl Trajectory.xyz")
-# with open(filename, "w") as f:
-#     frames = md.trajectory_to_xyz_frames()
-#     print("\n".join(frames), file=f)
+filename = os.path.join("xyz", "HCl Trajectory.xyz")
+with open(filename, "w") as f:
+    frames = md.trajectory_to_xyz_frames()
+    print("\n".join(frames), file=f)

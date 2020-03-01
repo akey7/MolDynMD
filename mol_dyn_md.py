@@ -17,6 +17,7 @@ atom_masses = {
 
 @dataclass
 class Atom:
+    symbol: str
     m: float
     x: np.array
     v: np.array
@@ -41,6 +42,9 @@ class MolDynMD:
     Where these vectors are needed for summing (as is the case of forces)
     or where these vectors are used as trajectories, each new vector in
     the sequence is added as a row.
+
+    Also assume that all atoms are indexed by i and j. j is the index of
+    the "other" atom. j exerts forces on i.
     """
 
     def __init__(self, timesteps=1000, dt=1.e-15, h=1e-15):
@@ -85,7 +89,7 @@ class MolDynMD:
         v = np.zeros((self.timesteps, 3))
         a = np.zeros((self.timesteps, 3))
         f = np.zeros((self.timesteps, 3))
-        atom = Atom(m=m, x=x, v=v, a=a, f=f)
+        atom = Atom(symbol=symbol, m=m, x=x, v=v, a=a, f=f)
         x[0] = initial_position
         v[0] = initial_velocity
         self.graph.add_node(self.atom_counter, atom=atom)
@@ -201,10 +205,10 @@ class MolDynMD:
         verbose: bool
             True to log each timestep after it is computed.
         """
-        for t in range(self.timesteps):
+        for t in range(self.timesteps - 1):
             if verbose:
-                print(f"Timestep {t} of {self.timesteps}, {t / self.timesteps * 100}%")
-            self.t += 1
+                print(f"Timestep {t}")
+            self.t = t
             self.iterate_timestep()
 
     def iterate_timestep(self):
@@ -219,13 +223,28 @@ class MolDynMD:
         This is meant to be used with the run() method. It relies on that method
         updating self.t so that all the timestamp indecies are correct.
         """
+        t = self.t
+        dt = self.dt
 
         # Iterate over each node, and find its edges for 1, 2 bonds
-
+        # to compute stretch energies.
         for i, atom_i in self.graph.nodes(data="atom"):
+
+            # Compute stretch forces from bonded atoms.
             for _, j, bond in self.graph.edges(nbunch=i, data="bond"):
-                atom_j = self.graph.nodes[j]
-                print(f"{atom_i} {atom_j} {bond}")
+                atom_j = self.graph.nodes[j]["atom"]
+                grad = self.stretch_gradient(xi=atom_i.x, xj=atom_j.x, l_IJ_0=bond.l_IJ_0, k_IJ=bond.k_IJ)
+                atom_i.f[t] += -grad * self.unit(xi=atom_i.x[t], xj=atom_j.x[t])
+
+            # Now compute the acceleration on the atom i from its sum of forces
+            atom_i.a[t] = atom_i.f[t] / atom_i.m
+
+        # Now update the positions and velocities based on the accelerations
+        for _, atom_i in self.graph.nodes(data="atom"):
+            new_v = atom_i.v[t] + atom_i.a[t] * dt
+            new_x = atom_i.x[t] + new_v * dt
+            atom_i.v[t + 1] = new_v
+            atom_i.x[t + 1] = new_x
 
     def trajectory_to_xyz_frames(self):
         """
@@ -237,6 +256,8 @@ class MolDynMD:
             A string, appropriate to write to a file, that contains
             .xyz format output that would animate an entire trajectory
         """
+        scaling_factor = 1e10
+
         frames = []
 
         for t in range(self.timesteps):
@@ -244,9 +265,9 @@ class MolDynMD:
             frames.append(f"frame\t{t}\txyz")
             for _, atom in self.graph.nodes(data="atom"):
                 position = atom.x[t]
-                x = position[0]
-                y = position[1]
-                z = position[2]
+                x = position[0] * scaling_factor
+                y = position[1] * scaling_factor
+                z = position[2] * scaling_factor
                 frames.append(f"{atom.symbol}\t{x}\t{y}\t{z}")
 
-        return frames.join("\n")
+        return frames
