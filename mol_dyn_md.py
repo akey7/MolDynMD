@@ -223,20 +223,6 @@ class MolDynMD:
         t = self.t
         dt = self.dt
 
-        # Iterate over each node, and find its edges for 1, 2 bonds
-        # to compute stretch energies.
-        # for i, atom_i in self.graph.nodes(data="atom"):
-        #
-        #     # Compute stretch forces from bonded atoms.
-        #     for _, j, bond in self.graph.edges(nbunch=i, data="bond"):
-        #         atom_j = self.graph.nodes[j]["atom"]
-        #         grad = self.stretch_gradient(xi=atom_i.x, xj=atom_j.x, l_IJ_0=bond.l_IJ_0, k_IJ=bond.k_IJ)
-        #         atom_i.f[t] += -grad * self.unit(xi=atom_i.x[t], xj=atom_j.x[t])
-        #
-        #     # Now compute the acceleration on the atom i from its sum of forces
-        #     atom_i.a[t + 1] = atom_i.f[t] / atom_i.m
-        #
-        # # Now update the positions and velocities based on the accelerations
         # for _, atom_i in self.graph.nodes(data="atom"):
         #     v_half_delta_t = atom_i.v[t] + 0.5 * atom_i.a[t] * dt
         #     atom_i.x[t + 1] = atom_i.x[t] + v_half_delta_t * dt
@@ -255,14 +241,26 @@ class MolDynMD:
                 grad = self.stretch_gradient(l_ij=l_ij, k_IJ=bond.k_IJ, l_IJ_0=bond.l_IJ_0)
                 atom_i.f[t] += -grad * self.unit(position_i, position_j)
 
+        # Kinematics
         # Now compute the new velocities and positions
-        for _, atom in self.graph.nodes(data="atom"):
-            # atoms[i]["position"] += atoms[i]["velocity"] * self.dt_s
-            # accel = atoms[i]["force_sum"] / atoms[i]["mass_kg"]
-            # atoms[i]["velocity"] += accel * self.dt_s
-            atom.a[t] = atom.f[t] / atom.m
-            atom.x[t] = atom.x[t - 1] + atom.v[t - 1] * dt
-            atom.v[t] = atom.v[t - 1] + atom.a[t] * dt
+        # for _, atom in self.graph.nodes(data="atom"):
+        #     atom.a[t] = atom.f[t] / atom.m
+        #     atom.x[t] = atom.x[t - 1] + atom.v[t - 1] * dt
+        #     atom.v[t] = atom.v[t - 1] + atom.a[t] * dt
+
+        # Velocity Verlet
+        # for _, atom_i in self.graph.nodes(data="atom"):
+        #     v_half_delta_t = atom_i.v[t] + 0.5 * atom_i.a[t] * dt
+        #     atom_i.x[t + 1] = atom_i.x[t] + v_half_delta_t * dt
+        #     atom_i.v[t + 1] = v_half_delta_t + 0.5 * atom_i.a[t + 1] * dt
+        #     pass
+
+        # Velocity Verlet
+        for _, atom_i in self.graph.nodes(data="atom"):
+            atom_i.a[t] = atom_i.f[t] / atom_i.m
+            v_half_delta_t = atom_i.v[t - 1] + 0.5 * atom_i.a[t - 1] * dt
+            atom_i.x[t] = atom_i.x[t - 1] + v_half_delta_t * dt
+            atom_i.v[t] = v_half_delta_t + 0.5 * atom_i.a[t] * dt
             pass
 
     def trajectory_to_xyz_frames(self):
