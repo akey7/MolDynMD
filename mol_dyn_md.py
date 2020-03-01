@@ -12,6 +12,7 @@ of the stretch energy on pg. 25 Eqn. 2.3 is enlightening.
 from dataclasses import dataclass
 import networkx as nx
 import numpy as np
+from numpy.linalg import norm
 
 
 kg_per_amu = 1.66054e-27
@@ -95,8 +96,13 @@ class MolDynMD:
         """
         pass
 
-    def stretch_gradient(self, x1, x2, l_IJ_0, k_IJ):
+    def stretch_gradient(self, xi, xj, l_IJ_0, k_IJ):
         """
-        Calcu
+        Calculate the stretch gradient between two positions and using the
+        bond constants given.
+
+        See Levine pg. 636 for an explanation of the variables.
         """
-        pass
+        l_ij = norm(xj - xi)
+        grad = k_IJ * (2 * l_ij - 2 * l_IJ_0) / 2
+        return grad
