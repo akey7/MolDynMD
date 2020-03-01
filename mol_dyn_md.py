@@ -101,8 +101,43 @@ class MolDynMD:
         Calculate the stretch gradient between two positions and using the
         bond constants given.
 
-        See Levine pg. 636 for an explanation of the variables.
+        See Levine pg. 636 for an explanation of the variables l_IJ_0, k_IJ
+
+        Parameters
+        ----------
+        xi: np.array
+            The array of x, y, z coordinates for atom i
+
+        xj: np.array
+            The array of x, y, z coordinates for atom j
+
+        l_IJ_0: float
+            The characteristic length of the bond.
+
+        Returns
+        -------
+        float
+            The value of the stretch gradient.
         """
         l_ij = norm(xj - xi)
         grad = k_IJ * (2 * l_ij - 2 * l_IJ_0) / 2
         return grad
+
+    def unit(self, xi, xj):
+        """
+        Returns the unit vector pointing from xi toward xj
+
+        Parameters
+        ----------
+        xi: np.array
+            The array of x, y, z coordinates for atom i
+
+        xj: np.array
+            The array of x, y, z coordinates for atom j
+
+        Returns
+        -------
+        np.array
+            The unit vector pointing from xi toward xj
+        """
+        return (xj - xi) / norm(xj - xi)
