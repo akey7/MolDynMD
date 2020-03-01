@@ -68,6 +68,15 @@ def test_stretch_gradient(hcl):
     assert approx(grad_fd, 1.1) == grad_analytical
 
 
+def test_force(hcl):
+    xi = np.array([0., 0., 0.])
+    xj = np.array([3., 4., 5.])
+    grad = 0
+    expected = np.array([0., 0., 0.])
+    actual = hcl.md.force(xi=xi, xj=xj, grad=grad)
+    assert np.allclose(expected, actual)
+
+
 def test_unit_vector(hcl):
     xi = np.array([0., 0., 0.])
     xj = np.array([3., 4., 5.])

@@ -89,12 +89,27 @@ class MolDynMD:
         bond = Bond(l_IJ_0=l_IJ_0, k_IJ=k_IJ)
         self.graph.add_edge(atom_a, atom_b, bond=bond)
 
-    def iterate_timestep(self):
+    def force(self, xi, xj, grad):
         """
-        1. Calculate energies
-        2. Calculate
+        Calculate the forces exerted on xi by xj with the given gradient.
+
+        Parameters
+        ----------
+        xi: np.array
+            The array of x, y, z coordinates for atom i
+
+        xj: np.array
+            The array of x, y, z coordinates for atom j
+
+        grad: float
+            The gradient
+
+        Returns
+        -------
+        np.array
+            The force vector.
         """
-        pass
+        return -grad * self.unit(xi=xi, xj=xj)
 
     def stretch_gradient(self, xi, xj, l_IJ_0, k_IJ):
         """
