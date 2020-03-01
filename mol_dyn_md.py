@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass
 import networkx as nx
 import numpy as np
@@ -190,3 +191,62 @@ class MolDynMD:
             and the mass.
         """
         return f.sum(axis=0) / m
+
+    def run(self, verbose=True):
+        """
+        This runs the trajectory over all the timesteps.
+
+        Parameters
+        ----------
+        verbose: bool
+            True to log each timestep after it is computed.
+        """
+        for t in range(self.timesteps):
+            if verbose:
+                print(f"Timestep {t} of {self.timesteps}, {t / self.timesteps * 100}%")
+            self.t += 1
+            self.iterate_timestep()
+
+    def iterate_timestep(self):
+        """
+        Runs through one iteration of the timestep
+
+        1. Calculate energy gradients
+        2. Calculate forces
+        3. Calculate accelerations
+        4. Numeric integration
+
+        This is meant to be used with the run() method. It relies on that method
+        updating self.t so that all the timestamp indecies are correct.
+        """
+
+        # Iterate over each node, and find its edges for 1, 2 bonds
+
+        for i, atom_i in self.graph.nodes(data="atom"):
+            for _, j, bond in self.graph.edges(nbunch=i, data="bond"):
+                atom_j = self.graph.nodes[j]
+                print(f"{atom_i} {atom_j} {bond}")
+
+    def trajectory_to_xyz_frames(self):
+        """
+        This writes the trajectory to a .xyz file
+
+        Returns
+        -------
+        str
+            A string, appropriate to write to a file, that contains
+            .xyz format output that would animate an entire trajectory
+        """
+        frames = []
+
+        for t in range(self.timesteps):
+            frames.append(f"{len(self.graph.nodes)}")
+            frames.append(f"frame\t{t}\txyz")
+            for _, atom in self.graph.nodes(data="atom"):
+                position = atom.x[t]
+                x = position[0]
+                y = position[1]
+                z = position[2]
+                frames.append(f"{atom.symbol}\t{x}\t{y}\t{z}")
+
+        return frames.join("\n")
