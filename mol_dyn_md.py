@@ -9,10 +9,10 @@ from numpy.linalg import norm
 kg_per_amu = 1.66054e-27
 
 atom_masses = {
-    "H": 1 * kg_per_amu,
-    "C": 12 * kg_per_amu,
-    "O": 16 * kg_per_amu,
-    "Cl": 35 * kg_per_amu
+    "H": 1,
+    "C": 12,
+    "O": 16,
+    "Cl": 35
 }
 
 
@@ -260,9 +260,9 @@ class MolDynMD:
             # atoms[i]["position"] += atoms[i]["velocity"] * self.dt_s
             # accel = atoms[i]["force_sum"] / atoms[i]["mass_kg"]
             # atoms[i]["velocity"] += accel * self.dt_s
-            atom.x[t] += atom.v[t - 1] * dt
             atom.a[t] = atom.f[t] / atom.m
-            atom.v[t] += atom.a[t] * dt
+            atom.x[t] = atom.x[t - 1] + atom.v[t - 1] * dt
+            atom.v[t] = atom.v[t - 1] + atom.a[t] * dt
             pass
 
     def trajectory_to_xyz_frames(self):
@@ -300,6 +300,7 @@ class MolDynMD:
         """
         rows = []
         id_counter = 0
+        position_scaling_factor = 1e10
 
         for t in range(self.timesteps):
             for atom_id, atom in self.graph.nodes(data="atom"):
@@ -312,9 +313,9 @@ class MolDynMD:
                     "Atom id": atom_id,
                     "Element symbol": atom.symbol,
                     "Atom mass [kg]": atom.m,
-                    "Position x [m]": atom.x[t, 0],
-                    "Position y [m]": atom.x[t, 1],
-                    "Position z [m]": atom.x[t, 2],
+                    "Position x [m]": atom.x[t, 0] * position_scaling_factor,
+                    "Position y [m]": atom.x[t, 1] * position_scaling_factor,
+                    "Position z [m]": atom.x[t, 2] * position_scaling_factor,
                     "Velocity x [m/s]": atom.v[t, 0],
                     "Velocity y [m/s]": atom.v[t, 1],
                     "Velocity z [m/s]": atom.v[t, 2],
