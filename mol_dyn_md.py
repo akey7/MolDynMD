@@ -109,7 +109,7 @@ class MolDynMD:
         bond = Bond(l_IJ_0=l_IJ_0, k_IJ=k_IJ)
         self.graph.add_edge(atom_i, atom_j, bond=bond)
 
-    def stretch_gradient(self, xi, xj, l_IJ_0, k_IJ):
+    def stretch_gradient(self, l_ij, l_IJ_0, k_IJ):
         """
         Calculate the stretch gradient between two positions and using the
         bond constants given.
@@ -118,32 +118,19 @@ class MolDynMD:
 
         Parameters
         ----------
-        xi: np.array
-            The array of x, y, z coordinates for atom i
-
-        xj: np.array
-            The array of x, y, z coordinates for atom j
-
         l_IJ_0: float
             The characteristic length of the bond.
+
+        k_IJ: float
+            The force constant of the bond
 
         Returns
         -------
         float
             The value of the stretch gradient.
         """
-        # l_ij = norm(xj - xi)
-        # grad = k_IJ * (2 * l_ij - 2 * l_IJ_0) / 2
-        # return grad
-        h = 1e-15
-
-        l_ij = norm(xj - xi)
-
-        v_ij = 0.5 * k_IJ * (l_ij - l_IJ_0) ** 2
-        v_ij_plus_h = 0.5 * k_IJ * (l_ij + h - l_IJ_0) ** 2
-        gradient = (v_ij_plus_h - v_ij) / h
-
-        return gradient
+        grad = k_IJ * (2 * l_ij - 2 * l_IJ_0) / 2
+        return grad
 
     def unit(self, xi, xj):
         """
@@ -215,7 +202,7 @@ class MolDynMD:
         verbose: bool
             True to log each timestep after it is computed.
         """
-        for t in range(self.timesteps - 1):
+        for t in range(1, self.timesteps):
             if verbose:
                 print(f"Timestep {t}")
             self.t = t
@@ -238,22 +225,45 @@ class MolDynMD:
 
         # Iterate over each node, and find its edges for 1, 2 bonds
         # to compute stretch energies.
+        # for i, atom_i in self.graph.nodes(data="atom"):
+        #
+        #     # Compute stretch forces from bonded atoms.
+        #     for _, j, bond in self.graph.edges(nbunch=i, data="bond"):
+        #         atom_j = self.graph.nodes[j]["atom"]
+        #         grad = self.stretch_gradient(xi=atom_i.x, xj=atom_j.x, l_IJ_0=bond.l_IJ_0, k_IJ=bond.k_IJ)
+        #         atom_i.f[t] += -grad * self.unit(xi=atom_i.x[t], xj=atom_j.x[t])
+        #
+        #     # Now compute the acceleration on the atom i from its sum of forces
+        #     atom_i.a[t + 1] = atom_i.f[t] / atom_i.m
+        #
+        # # Now update the positions and velocities based on the accelerations
+        # for _, atom_i in self.graph.nodes(data="atom"):
+        #     v_half_delta_t = atom_i.v[t] + 0.5 * atom_i.a[t] * dt
+        #     atom_i.x[t + 1] = atom_i.x[t] + v_half_delta_t * dt
+        #     atom_i.v[t + 1] = v_half_delta_t + 0.5 * atom_i.a[t + 1] * dt
+
+        for _, atom in self.graph.nodes(data="atom"):
+            atom.f[t] = np.array([0., 0., 0.])
+
+        # Calculate stretch forces
         for i, atom_i in self.graph.nodes(data="atom"):
+            position_i = atom_i.x[t - 1]
+            for u, v, bond in self.graph.edges(nbunch=i, data="bond"):
+                atom_j = self.graph.nodes[v]["atom"]
+                position_j = atom_j.x[t - 1]
+                l_ij = norm(position_j - position_i)
+                grad = self.stretch_gradient(l_ij=l_ij, k_IJ=bond.k_IJ, l_IJ_0=bond.l_IJ_0)
+                atom_i.f[t] += -grad * self.unit(position_i, position_j)
 
-            # Compute stretch forces from bonded atoms.
-            for _, j, bond in self.graph.edges(nbunch=i, data="bond"):
-                atom_j = self.graph.nodes[j]["atom"]
-                grad = self.stretch_gradient(xi=atom_i.x, xj=atom_j.x, l_IJ_0=bond.l_IJ_0, k_IJ=bond.k_IJ)
-                atom_i.f[t] += -grad * self.unit(xi=atom_i.x[t], xj=atom_j.x[t])
-
-            # Now compute the acceleration on the atom i from its sum of forces
-            atom_i.a[t + 1] = atom_i.f[t] / atom_i.m
-
-        # Now update the positions and velocities based on the accelerations
-        for _, atom_i in self.graph.nodes(data="atom"):
-            v_half_delta_t = atom_i.v[t] + 0.5 * atom_i.a[t] * dt
-            atom_i.x[t + 1] = atom_i.x[t] + v_half_delta_t * dt
-            atom_i.v[t + 1] = v_half_delta_t + 0.5 * atom_i.a[t + 1] * dt
+        # Now compute the new velocities and positions
+        for _, atom in self.graph.nodes(data="atom"):
+            # atoms[i]["position"] += atoms[i]["velocity"] * self.dt_s
+            # accel = atoms[i]["force_sum"] / atoms[i]["mass_kg"]
+            # atoms[i]["velocity"] += accel * self.dt_s
+            atom.x[t] += atom.v[t - 1] * dt
+            atom.a[t] = atom.f[t] / atom.m
+            atom.v[t] += atom.a[t] * dt
+            pass
 
     def trajectory_to_xyz_frames(self):
         """
