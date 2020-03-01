@@ -238,14 +238,13 @@ class MolDynMD:
                 atom_i.f[t] += -grad * self.unit(xi=atom_i.x[t], xj=atom_j.x[t])
 
             # Now compute the acceleration on the atom i from its sum of forces
-            atom_i.a[t] = atom_i.f[t] / atom_i.m
+            atom_i.a[t + 1] = atom_i.f[t] / atom_i.m
 
         # Now update the positions and velocities based on the accelerations
         for _, atom_i in self.graph.nodes(data="atom"):
-            new_v = atom_i.v[t] + atom_i.a[t] * dt
-            new_x = atom_i.x[t] + new_v * dt
-            atom_i.v[t + 1] = new_v
-            atom_i.x[t + 1] = new_x
+            v_half_delta_t = atom_i.v[t] + 0.5 * atom_i.a[t] * dt
+            atom_i.x[t + 1] = atom_i.x[t] + v_half_delta_t * dt
+            atom_i.v[t + 1] = v_half_delta_t + 0.5 * atom_i.a[t + 1] * dt
 
     def trajectory_to_xyz_frames(self):
         """
