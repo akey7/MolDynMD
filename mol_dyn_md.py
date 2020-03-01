@@ -36,14 +36,29 @@ class Atom:
 @dataclass
 class Bond:
     """
-    See Jensen pg. 25
+    See Levine pg. 636
     """
-    k_ab: float
-    r_ab_0: float
+    k_IJ: float
+    l_IJ_0: float
 
 
 class MolDynMD:
     def __init__(self, timesteps=1000, dt=1.e-15, h=1e-15):
+        """
+        Set up the simulation run.
+
+        Parameters
+        ---------
+        timesteps: int
+            The number of timesteps to run in the simulation.
+
+        dt: float
+            The timestep. Should probably keep on the order of
+            femtoseconds.
+
+        h: float
+            The step size to use for numeric differentiation.
+        """
         self.graph = nx.Graph()
         self.atom_counter = 0
         self.frames = []
@@ -65,10 +80,23 @@ class MolDynMD:
         self.atom_counter += 1
         return self.atom_counter - 1
 
-    def add_bond(self, atom_a, atom_b, r_ab_0, k_ab):
+    def add_bond(self, atom_a, atom_b, l_IJ_0, k_IJ):
         """
         See Bond dataclass docstring above for citation of what these variables mean.
         """
         atoms = self.graph.nodes
-        bond = Bond(r_ab_0=r_ab_0, k_ab=k_ab)
+        bond = Bond(l_IJ_0=l_IJ_0, k_IJ=k_IJ)
         self.graph.add_edge(atom_a, atom_b, bond=bond)
+
+    def iterate_timestep(self):
+        """
+        1. Calculate energies
+        2. Calculate
+        """
+        pass
+
+    def stretch_gradient(self, x1, x2, l_IJ_0, k_IJ):
+        """
+        Calcu
+        """
+        pass
