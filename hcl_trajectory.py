@@ -6,8 +6,8 @@ from mol_dyn_md import MolDynMD
 md = MolDynMD(timesteps=1000)
 
 reference_length_of_HCl_m = 1.2745e-10
-force_constant = -0.1
-h_initial_position = np.array([reference_length_of_HCl_m * 0.99, 0., 0.])
+force_constant = -0.01
+h_initial_position = np.array([reference_length_of_HCl_m * 0.999, 0., 0.])
 cl_initial_position = np.array([0., 0., 0.])
 h_initial_velocity = np.array([0., 0., 0.])
 cl_initial_velocity = np.array([0., 0., 0.])
