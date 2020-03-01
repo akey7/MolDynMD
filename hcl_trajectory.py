@@ -3,9 +3,9 @@ import numpy as np
 from mol_dyn_md import MolDynMD
 
 
-md = MolDynMD(timesteps=100000)
+md = MolDynMD(timesteps=1000)
 
-reference_length_of_HCl_m = 127.45e-12
+reference_length_of_HCl_m = 1.2745e-10
 force_constant = -0.1
 h_initial_position = np.array([reference_length_of_HCl_m * 0.99, 0., 0.])
 cl_initial_position = np.array([0., 0., 0.])
@@ -21,3 +21,7 @@ filename = os.path.join("xyz", "HCl Trajectory.xyz")
 with open(filename, "w") as f:
     frames = md.trajectory_to_xyz_frames()
     print("\n".join(frames), file=f)
+
+filename = os.path.join("xyz", "HCL Tracjectory.csv")
+df = md.tracjectory_to_dataframe()
+df.to_csv(filename, index=False)

@@ -131,4 +131,5 @@ dmypy.json
 .idea/
 
 *.xyz
+*.csv
 .DS_Store

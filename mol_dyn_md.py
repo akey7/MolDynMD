@@ -2,6 +2,7 @@ import os
 from dataclasses import dataclass
 import networkx as nx
 import numpy as np
+import pandas as pd
 from numpy.linalg import norm
 
 
@@ -271,3 +272,42 @@ class MolDynMD:
                 frames.append(f"{atom.symbol}\t{x}\t{y}\t{z}")
 
         return frames
+
+    def tracjectory_to_dataframe(self):
+        """
+        This creates a dataframe with the following columns for each atom
+        at each timestep.
+
+        See the dictionary below for the columns and units in this dataframe.
+        """
+        rows = []
+        id_counter = 0
+
+        for t in range(self.timesteps):
+            for atom_id, atom in self.graph.nodes(data="atom"):
+                rows.append({
+                    "id": id_counter,
+                    "Time step": t,
+                    "Out of how many time steps": self.timesteps,
+                    "Time [s]": t * self.dt,
+                    "Time step duration [s]": self.dt,
+                    "Atom id": atom_id,
+                    "Element symbol": atom.symbol,
+                    "Atom mass [kg]": atom.m,
+                    "Position x [m]": atom.x[t, 0],
+                    "Position y [m]": atom.x[t, 1],
+                    "Position z [m]": atom.x[t, 2],
+                    "Velocity x [m/s]": atom.v[t, 0],
+                    "Velocity y [m/s]": atom.v[t, 1],
+                    "Velocity z [m/s]": atom.v[t, 2],
+                    "Force x [N]": atom.f[t, 0],
+                    "Force y [N]": atom.f[t, 1],
+                    "Force z [N]": atom.f[t, 2],
+                    "Acceleration x [m/s^2]": atom.a[t, 0],
+                    "Acceleration y [m/s^2]": atom.a[t, 1],
+                    "Acceleration z [m/s^2]": atom.a[t, 2]
+                })
+                id_counter += 1
+
+        df = pd.DataFrame(rows)
+        return df
