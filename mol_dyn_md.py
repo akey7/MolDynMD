@@ -132,9 +132,18 @@ class MolDynMD:
         float
             The value of the stretch gradient.
         """
+        # l_ij = norm(xj - xi)
+        # grad = k_IJ * (2 * l_ij - 2 * l_IJ_0) / 2
+        # return grad
+        h = 1e-15
+
         l_ij = norm(xj - xi)
-        grad = k_IJ * (2 * l_ij - 2 * l_IJ_0) / 2
-        return grad
+
+        v_ij = 0.5 * k_IJ * (l_ij - l_IJ_0) ** 2
+        v_ij_plus_h = 0.5 * k_IJ * (l_ij + h - l_IJ_0) ** 2
+        gradient = (v_ij_plus_h - v_ij) / h
+
+        return gradient
 
     def unit(self, xi, xj):
         """
