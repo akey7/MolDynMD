@@ -93,7 +93,7 @@ def test_acceleration(hcl_fixture):
     ])
     m = 1
     expected = f.sum(axis=0) / m
-    actual = hcl_fixture.force(f=f, m=m)
+    actual = hcl_fixture.md.acceleration(f=f, m=m)
     assert np.allclose(expected, actual)
 
 
