@@ -3,11 +3,11 @@ import numpy as np
 from mol_dyn_md import MolDynMD
 
 
-md = MolDynMD()
+md = MolDynMD(timesteps=100000)
 
 reference_length_of_HCl_m = 127.45e-12
-force_constant = -1.0
-h_initial_position = np.array([reference_length_of_HCl_m * 0.9, 0., 0.])
+force_constant = -0.1
+h_initial_position = np.array([reference_length_of_HCl_m * 0.99, 0., 0.])
 cl_initial_position = np.array([0., 0., 0.])
 h_initial_velocity = np.array([0., 0., 0.])
 cl_initial_velocity = np.array([0., 0., 0.])

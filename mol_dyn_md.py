@@ -8,10 +8,10 @@ from numpy.linalg import norm
 kg_per_amu = 1.66054e-27
 
 atom_masses = {
-    "H": 1,
-    "C": 12,
-    "O": 16,
-    "Cl": 35,
+    "H": 1 * kg_per_amu,
+    "C": 12 * kg_per_amu,
+    "O": 16 * kg_per_amu,
+    "Cl": 35 * kg_per_amu
 }
 
 
