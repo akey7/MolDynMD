@@ -1,14 +1,3 @@
-"""
-Notation in the file uses the style from Quantum Chemistry, 7th Ed by
-Ira Levine, pp. 636-637. Note that there are some good unit conversions
-in here.
-
-However, in Introduction to Computational Chemistry by Jensen, pg. 64
-has some interesting values for force fields also. Its explanation
-of the stretch energy on pg. 25 Eqn. 2.3 is enlightening.
-"""
-
-
 from dataclasses import dataclass
 import networkx as nx
 import numpy as np
@@ -44,6 +33,15 @@ class Bond:
 
 
 class MolDynMD:
+    """
+    Velocities, positions, accelerations and forces are represneted as
+    3 dimensional row vectors.
+
+    Where these vectors are needed for summing (as is the case of forces)
+    or where these vectors are used as trajectories, each new vector in
+    the sequence is added as a row.
+    """
+
     def __init__(self, timesteps=1000, dt=1.e-15, h=1e-15):
         """
         Set up the simulation run.
@@ -85,31 +83,8 @@ class MolDynMD:
         """
         See Bond dataclass docstring above for citation of what these variables mean.
         """
-        atoms = self.graph.nodes
         bond = Bond(l_IJ_0=l_IJ_0, k_IJ=k_IJ)
         self.graph.add_edge(atom_a, atom_b, bond=bond)
-
-    def force(self, xi, xj, grad):
-        """
-        Calculate the forces exerted on xi by xj with the given gradient.
-
-        Parameters
-        ----------
-        xi: np.array
-            The array of x, y, z coordinates for atom i
-
-        xj: np.array
-            The array of x, y, z coordinates for atom j
-
-        grad: float
-            The gradient
-
-        Returns
-        -------
-        np.array
-            The force vector.
-        """
-        return -grad * self.unit(xi=xi, xj=xj)
 
     def stretch_gradient(self, xi, xj, l_IJ_0, k_IJ):
         """
@@ -156,3 +131,45 @@ class MolDynMD:
             The unit vector pointing from xi toward xj
         """
         return (xj - xi) / norm(xj - xi)
+
+    def force(self, xi, xj, grad):
+        """
+        Calculate the forces exerted on xi by xj with the given gradient.
+
+        Parameters
+        ----------
+        xi: np.array
+            The array of x, y, z coordinates for atom i
+
+        xj: np.array
+            The array of x, y, z coordinates for atom j
+
+        grad: float
+            The gradient
+
+        Returns
+        -------
+        np.array
+            The force vector.
+        """
+        return -grad * self.unit(xi=xi, xj=xj)
+
+    def acceleration(self, f, m):
+        """
+        Parameters
+        ----------
+        f: np.array
+            A matrix of force vectors. Each individual force vector is a 3
+            dimensional row vector. So to get the final sum of forces,
+            the columns are summed.
+
+        m: float
+            The mass of the object upon which the force is acting.
+
+        Returns
+        -------
+        np.array
+            The 3 dimensional acceleration vector that results from force
+            and the mass.
+        """
+        return f.sum(axis=0) / m

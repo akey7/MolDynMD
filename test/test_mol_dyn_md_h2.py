@@ -22,7 +22,7 @@ class HClFixture:
 
 
 @pytest.fixture()
-def hcl():
+def hcl_fixture():
     md = MolDynMD()
     h_initial_position = np.array([reference_length_of_HCl_m, 0., 0.])
     cl_initial_position = np.array([0., 0., 0.])
@@ -34,15 +34,15 @@ def hcl():
     return HClFixture(graph=md.graph, h=h, cl=cl, md=md)
 
 
-def test_hcl_atom_count(hcl):
-    assert len(hcl.graph.nodes) == 2
+def test_hcl_atom_count(hcl_fixture):
+    assert len(hcl_fixture.graph.nodes) == 2
 
 
-def test_hcl_bond_count(hcl):
-    assert len(hcl.graph.edges) == 1
+def test_hcl_bond_count(hcl_fixture):
+    assert len(hcl_fixture.graph.edges) == 1
 
 
-def test_stretch_gradient(hcl):
+def test_stretch_gradient(hcl_fixture):
     """
     Test the analytical solution to the stretch gradient with a finite difference
     approximation.
@@ -63,27 +63,39 @@ def test_stretch_gradient(hcl):
     e_plus_h = 0.5 * k_IJ * (l_ij - l_IJ_0 + h) ** 2
     grad_fd = (e_plus_h - e) / 2
 
-    grad_analytical = hcl.md.stretch_gradient(xi=xi, xj=xj, l_IJ_0=l_IJ_0, k_IJ=k_IJ)
+    grad_analytical = hcl_fixture.md.stretch_gradient(xi=xi, xj=xj, l_IJ_0=l_IJ_0, k_IJ=k_IJ)
 
     assert approx(grad_fd, 1.1) == grad_analytical
 
 
-def test_force(hcl):
+def test_force(hcl_fixture):
     xi = np.array([0., 0., 0.])
     xj = np.array([3., 4., 5.])
     grad = 0
     expected = np.array([0., 0., 0.])
-    actual = hcl.md.force(xi=xi, xj=xj, grad=grad)
+    actual = hcl_fixture.md.force(xi=xi, xj=xj, grad=grad)
     assert np.allclose(expected, actual)
 
 
-def test_unit_vector(hcl):
+def test_unit_vector(hcl_fixture):
     xi = np.array([0., 0., 0.])
     xj = np.array([3., 4., 5.])
     expected = np.array([0.42426407, 0.56568542, 0.70710678])
-    actual = hcl.md.unit(xi=xi, xj=xj)
-
+    actual = hcl_fixture.md.unit(xi=xi, xj=xj)
     assert np.allclose(expected, actual)
+
+
+def test_acceleration(hcl_fixture):
+    f = np.array([
+        [1., 2., 3.],
+        [5., 6., 7.],
+        [-1, -10, 7]
+    ])
+    m = 1
+    expected = f.sum(axis=0) / m
+    actual = hcl_fixture.force(f=f, m=m)
+    assert np.allclose(expected, actual)
+
 
 # def test_positions(hcl):
 #     graph, _, _, md = hcl
