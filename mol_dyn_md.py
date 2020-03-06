@@ -273,8 +273,6 @@ class MolDynMD:
             A string, appropriate to write to a file, that contains
             .xyz format output that would animate an entire trajectory
         """
-        scaling_factor = 1e10
-
         frames = []
 
         for t in range(self.timesteps):
@@ -282,9 +280,9 @@ class MolDynMD:
             frames.append(f"frame\t{t}\txyz")
             for _, atom in self.graph.nodes(data="atom"):
                 position = atom.x[t]
-                x = position[0] * scaling_factor
-                y = position[1] * scaling_factor
-                z = position[2] * scaling_factor
+                x = position[0]
+                y = position[1]
+                z = position[2]
                 frames.append(f"{atom.symbol}\t{x}\t{y}\t{z}")
 
         return frames
