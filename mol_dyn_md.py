@@ -241,20 +241,6 @@ class MolDynMD:
                 grad = self.stretch_gradient(l_ij=l_ij, k_IJ=bond.k_IJ, l_IJ_0=bond.l_IJ_0)
                 atom_i.f[t] += -grad * self.unit(position_i, position_j)
 
-        # Kinematics
-        # Now compute the new velocities and positions
-        # for _, atom in self.graph.nodes(data="atom"):
-        #     atom.a[t] = atom.f[t] / atom.m
-        #     atom.x[t] = atom.x[t - 1] + atom.v[t - 1] * dt
-        #     atom.v[t] = atom.v[t - 1] + atom.a[t] * dt
-
-        # Velocity Verlet
-        # for _, atom_i in self.graph.nodes(data="atom"):
-        #     v_half_delta_t = atom_i.v[t] + 0.5 * atom_i.a[t] * dt
-        #     atom_i.x[t + 1] = atom_i.x[t] + v_half_delta_t * dt
-        #     atom_i.v[t + 1] = v_half_delta_t + 0.5 * atom_i.a[t + 1] * dt
-        #     pass
-
         # Velocity Verlet
         for _, atom_i in self.graph.nodes(data="atom"):
             atom_i.a[t] = atom_i.f[t] / atom_i.m
@@ -273,8 +259,6 @@ class MolDynMD:
             A string, appropriate to write to a file, that contains
             .xyz format output that would animate an entire trajectory
         """
-        scaling_factor = 1e10
-
         frames = []
 
         for t in range(self.timesteps):
@@ -282,9 +266,9 @@ class MolDynMD:
             frames.append(f"frame\t{t}\txyz")
             for _, atom in self.graph.nodes(data="atom"):
                 position = atom.x[t]
-                x = position[0] * scaling_factor
-                y = position[1] * scaling_factor
-                z = position[2] * scaling_factor
+                x = position[0]
+                y = position[1]
+                z = position[2]
                 frames.append(f"{atom.symbol}\t{x}\t{y}\t{z}")
 
         return frames
