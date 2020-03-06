@@ -263,9 +263,14 @@ class MolDynMD:
             atom_i.v[t] = v_half_delta_t + 0.5 * atom_i.a[t] * dt
             pass
 
-    def trajectory_to_xyz_frames(self):
+    def trajectory_to_xyz_frames(self, scaling_factor):
         """
         This writes the trajectory to a .xyz file
+
+        Parameters
+        ----------
+        scaling_factor: float
+            A factor to scale every coordinate.
 
         Returns
         -------
@@ -279,7 +284,7 @@ class MolDynMD:
             frames.append(f"{len(self.graph.nodes)}")
             frames.append(f"frame\t{t}\txyz")
             for _, atom in self.graph.nodes(data="atom"):
-                position = atom.x[t]
+                position = atom.x[t] * scaling_factor
                 x = position[0]
                 y = position[1]
                 z = position[2]
