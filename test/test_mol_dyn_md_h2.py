@@ -63,7 +63,7 @@ def test_stretch_gradient(hcl_fixture):
     e_plus_h = 0.5 * k_IJ * (l_ij - l_IJ_0 + h) ** 2
     grad_fd = (e_plus_h - e) / 2
 
-    grad_analytical = hcl_fixture.md.stretch_gradient(xi=xi, xj=xj, l_IJ_0=l_IJ_0, k_IJ=k_IJ)
+    grad_analytical = hcl_fixture.md.stretch_gradient(l_ij=l_ij, l_IJ_0=l_IJ_0, k_IJ=k_IJ)
 
     assert approx(grad_fd, 1.1) == grad_analytical
 
