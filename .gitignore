@@ -132,4 +132,5 @@ dmypy.json
 
 *.xyz
 *.csv
+*.twb
 .DS_Store
