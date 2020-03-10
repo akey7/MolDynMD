@@ -289,7 +289,6 @@ class MolDynMD:
         """
         rows = []
         id_counter = 0
-        position_scaling_factor = 1e10
 
         for t in range(self.timesteps):
             for atom_id, atom in self.graph.nodes(data="atom"):
@@ -312,8 +311,8 @@ class MolDynMD:
                     "Force y [1e14 N]": atom.f[t, 1],
                     "Force z [1e14 N]": atom.f[t, 2],
                     "Acceleration x [Å/ps^2]": atom.a[t, 0],
-                    "Acceleration y [Å/s^2]": atom.a[t, 1],
-                    "Acceleration z [Å/s^2]": atom.a[t, 2]
+                    "Acceleration y [Å/ps^2]": atom.a[t, 1],
+                    "Acceleration z [Å/ps^2]": atom.a[t, 2]
                 })
                 id_counter += 1
 
