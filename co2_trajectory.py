@@ -8,7 +8,7 @@ All distances are in angstroms.
 All times are in picoseconds
 """
 
-md = MolDynMD(timesteps=1000, dt=1e-3)
+md = MolDynMD(timesteps=50000, dt=1e-3)
 
 co2_bond_length = 1.16
 force_constant = -1
@@ -16,11 +16,11 @@ force_constant = -1
 c_initial_position = np.array([0., 0., 0.])
 c_initial_velocity = np.array([0., 0., 0.])
 
-o1_initial_position = np.array([co2_bond_length * 0.99, 0., 0.])
-o1_initial_velocity = np.array([-0.1, 0., 0.])
+o1_initial_position = np.array([co2_bond_length, 0., 0.])
+o1_initial_velocity = np.array([-0.01, 0., 0.])
 
-o2_initial_position = np.array([-co2_bond_length * 0.99, 0., 0.])
-o2_initial_velocity = np.array([0.1, 0., 0.])
+o2_initial_position = np.array([-co2_bond_length, 0., 0.])
+o2_initial_velocity = np.array([0.01, 0., 0.])
 
 c = md.add_atom("C", initial_position=c_initial_position, initial_velocity=c_initial_velocity)
 o1 = md.add_atom("O", initial_position=o1_initial_position, initial_velocity=o1_initial_velocity)

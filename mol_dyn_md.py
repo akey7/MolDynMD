@@ -297,7 +297,7 @@ class MolDynMD:
                     "Time step": t,
                     "Out of how many time steps": self.timesteps,
                     "Time [ps]": t * self.dt,
-                    "Time step duration [s]": self.dt,
+                    "Time step duration [ps]": self.dt,
                     "Atom id": atom_id,
                     "Element symbol": atom.symbol,
                     "Atom mass [kg]": atom.m,
