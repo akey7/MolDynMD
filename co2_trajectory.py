@@ -33,7 +33,7 @@ md.run()
 
 filename = os.path.join("xyz", "CO2 Trajectory.xyz")
 with open(filename, "w") as f:
-    frames = md.trajectory_to_xyz_frames(scaling_factor=1)
+    frames = md.trajectory_to_xyz_frames(scaling_factor=1, step=100)
     print("\n".join(frames), file=f)
 
 filename = os.path.join("xyz", "CO2 Tracjectory.csv")

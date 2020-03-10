@@ -250,12 +250,17 @@ class MolDynMD:
             atom_i.v[t] = v_half_delta_t + 0.5 * atom_i.a[t] * dt
             pass
 
-    def trajectory_to_xyz_frames(self, scaling_factor=1.0):
+    def trajectory_to_xyz_frames(self, step=1, scaling_factor=1.0):
         """
         This writes the trajectory to a .xyz file
 
         Parameters
         ----------
+        step: int
+            The stride through the array that holds the position information
+            Use this to make higher speed animations. Note: this doesn't
+            affect calculation of the trajectory.
+
         scaling_factor: float
             A factor to scale every coordinate. Optional. If left unset
             defaults to 1.0
@@ -268,7 +273,7 @@ class MolDynMD:
         """
         frames = []
 
-        for t in range(self.timesteps):
+        for t in range(0, self.timesteps, step):
             frames.append(f"{len(self.graph.nodes)}")
             frames.append(f"frame\t{t}\txyz")
             for _, atom in self.graph.nodes(data="atom"):
