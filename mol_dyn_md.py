@@ -46,6 +46,12 @@ class MolDynMD:
 
     Also assume that all atoms are indexed by i and j. j is the index of
     the "other" atom. j exerts forces on i.
+
+    IF THE UNITS ARE ANGSTROMS AND THE TIME UNITS ARE PICOSECONDS:
+
+    Force is in "1 (kg angstroms) per (picosecond square)", which is
+    1e14 N. But keep in mind there are vanishingly small masses here,
+    not whole kilograms. So forces are not on that order of magnitude.
     """
 
     def __init__(self, timesteps=1000, dt=1.e-15, h=1e-15):
@@ -223,11 +229,6 @@ class MolDynMD:
         t = self.t
         dt = self.dt
 
-        # for _, atom_i in self.graph.nodes(data="atom"):
-        #     v_half_delta_t = atom_i.v[t] + 0.5 * atom_i.a[t] * dt
-        #     atom_i.x[t + 1] = atom_i.x[t] + v_half_delta_t * dt
-        #     atom_i.v[t + 1] = v_half_delta_t + 0.5 * atom_i.a[t + 1] * dt
-
         for _, atom in self.graph.nodes(data="atom"):
             atom.f[t] = np.array([0., 0., 0.])
 
@@ -241,20 +242,6 @@ class MolDynMD:
                 grad = self.stretch_gradient(l_ij=l_ij, k_IJ=bond.k_IJ, l_IJ_0=bond.l_IJ_0)
                 atom_i.f[t] += -grad * self.unit(position_i, position_j)
 
-        # Kinematics
-        # Now compute the new velocities and positions
-        # for _, atom in self.graph.nodes(data="atom"):
-        #     atom.a[t] = atom.f[t] / atom.m
-        #     atom.x[t] = atom.x[t - 1] + atom.v[t - 1] * dt
-        #     atom.v[t] = atom.v[t - 1] + atom.a[t] * dt
-
-        # Velocity Verlet
-        # for _, atom_i in self.graph.nodes(data="atom"):
-        #     v_half_delta_t = atom_i.v[t] + 0.5 * atom_i.a[t] * dt
-        #     atom_i.x[t + 1] = atom_i.x[t] + v_half_delta_t * dt
-        #     atom_i.v[t + 1] = v_half_delta_t + 0.5 * atom_i.a[t + 1] * dt
-        #     pass
-
         # Velocity Verlet
         for _, atom_i in self.graph.nodes(data="atom"):
             atom_i.a[t] = atom_i.f[t] / atom_i.m
@@ -263,9 +250,20 @@ class MolDynMD:
             atom_i.v[t] = v_half_delta_t + 0.5 * atom_i.a[t] * dt
             pass
 
-    def trajectory_to_xyz_frames(self):
+    def trajectory_to_xyz_frames(self, step=1, scaling_factor=1.0):
         """
         This writes the trajectory to a .xyz file
+
+        Parameters
+        ----------
+        step: int
+            The stride through the array that holds the position information
+            Use this to make higher speed animations. Note: this doesn't
+            affect calculation of the trajectory.
+
+        scaling_factor: float
+            A factor to scale every coordinate. Optional. If left unset
+            defaults to 1.0
 
         Returns
         -------
@@ -273,18 +271,16 @@ class MolDynMD:
             A string, appropriate to write to a file, that contains
             .xyz format output that would animate an entire trajectory
         """
-        scaling_factor = 1e10
-
         frames = []
 
-        for t in range(self.timesteps):
+        for t in range(0, self.timesteps, step):
             frames.append(f"{len(self.graph.nodes)}")
             frames.append(f"frame\t{t}\txyz")
             for _, atom in self.graph.nodes(data="atom"):
-                position = atom.x[t]
-                x = position[0] * scaling_factor
-                y = position[1] * scaling_factor
-                z = position[2] * scaling_factor
+                position = atom.x[t] * scaling_factor
+                x = position[0]
+                y = position[1]
+                z = position[2]
                 frames.append(f"{atom.symbol}\t{x}\t{y}\t{z}")
 
         return frames
@@ -298,7 +294,6 @@ class MolDynMD:
         """
         rows = []
         id_counter = 0
-        position_scaling_factor = 1e10
 
         for t in range(self.timesteps):
             for atom_id, atom in self.graph.nodes(data="atom"):
@@ -306,23 +301,23 @@ class MolDynMD:
                     "id": id_counter,
                     "Time step": t,
                     "Out of how many time steps": self.timesteps,
-                    "Time [s]": t * self.dt,
-                    "Time step duration [s]": self.dt,
+                    "Time [ps]": t * self.dt,
+                    "Time step duration [ps]": self.dt,
                     "Atom id": atom_id,
                     "Element symbol": atom.symbol,
                     "Atom mass [kg]": atom.m,
-                    "Position x [m]": atom.x[t, 0],
-                    "Position y [m]": atom.x[t, 1],
-                    "Position z [m]": atom.x[t, 2],
-                    "Velocity x [m/s]": atom.v[t, 0],
-                    "Velocity y [m/s]": atom.v[t, 1],
-                    "Velocity z [m/s]": atom.v[t, 2],
-                    "Force x [N]": atom.f[t, 0],
-                    "Force y [N]": atom.f[t, 1],
-                    "Force z [N]": atom.f[t, 2],
-                    "Acceleration x [m/s^2]": atom.a[t, 0],
-                    "Acceleration y [m/s^2]": atom.a[t, 1],
-                    "Acceleration z [m/s^2]": atom.a[t, 2]
+                    "Position x [Å]": atom.x[t, 0],
+                    "Position y [Å]": atom.x[t, 1],
+                    "Position z [Å]": atom.x[t, 2],
+                    "Velocity x [Å/ps]": atom.v[t, 0],
+                    "Velocity y [Å/ps]": atom.v[t, 1],
+                    "Velocity z [Å/ps]": atom.v[t, 2],
+                    "Force x [kg Å/ps^2]": atom.f[t, 0],
+                    "Force y [kg Å/ps^2]": atom.f[t, 1],
+                    "Force z [kg Å/ps^2]": atom.f[t, 2],
+                    "Acceleration x [Å/ps^2]": atom.a[t, 0],
+                    "Acceleration y [Å/ps^2]": atom.a[t, 1],
+                    "Acceleration z [Å/ps^2]": atom.a[t, 2]
                 })
                 id_counter += 1
 
