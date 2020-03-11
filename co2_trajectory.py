@@ -8,7 +8,7 @@ All distances are in angstroms.
 All times are in picoseconds
 """
 
-md = MolDynMD(timesteps=1000, dt=1e-3)
+md = MolDynMD(timesteps=250000, dt=1e-3)
 
 co2_bond_length = 1.16
 force_constant = -1
