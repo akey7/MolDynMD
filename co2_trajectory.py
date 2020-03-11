@@ -34,11 +34,11 @@ md.add_bond(c1, o2, l_IJ_0=co2_bond_length, k_IJ=force_constant)
 c_2_initial_position = np.array([0., 0., co2_bond_length * 3])
 c_2_initial_velocity = np.array([0., 0., 0.])
 
-o3_initial_position = np.array([co2_bond_length, 0., co2_bond_length * 3])
-o3_initial_velocity = np.array([-0.01, 0., 0.])
+o3_initial_position = np.array([0., co2_bond_length, co2_bond_length * 3])
+o3_initial_velocity = np.array([0., -0.01, 0.])
 
-o4_initial_position = np.array([-co2_bond_length, 0., co2_bond_length * 3])
-o4_initial_velocity = np.array([0.01, 0., 0.])
+o4_initial_position = np.array([0., -co2_bond_length, co2_bond_length * 3])
+o4_initial_velocity = np.array([0., 0.01, 0.])
 
 c2 = md.add_atom("C", initial_position=c_2_initial_position, initial_velocity=c_2_initial_velocity)
 o3 = md.add_atom("O", initial_position=o3_initial_position, initial_velocity=o3_initial_velocity)
